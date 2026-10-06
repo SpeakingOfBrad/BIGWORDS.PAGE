@@ -7,6 +7,12 @@ type Route = 'home' | 'viewer' | 'editor' | 'docs' | 'notfound';
 type Mounted = { update?(): void; destroy(): void };
 
 const app = document.getElementById('app')!;
+// index.html carries the prerendered home page. Clear it for any other
+// route; home.ts renders the same markup over it.
+if (app.hasAttribute('data-prerendered')) {
+  if (currentRoute() !== 'home') app.replaceChildren();
+  app.removeAttribute('data-prerendered');
+}
 let route: Route | null = null;
 let mounted: Mounted | null = null;
 let generation = 0;

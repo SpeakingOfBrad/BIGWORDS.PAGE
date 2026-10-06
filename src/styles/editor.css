@@ -51,6 +51,9 @@
   background: var(--bg-2);
   color: var(--fg);
 }
+.preview-bar .btn-icon {
+  padding: 8px 10px;
+}
 .url-count {
   font-size: 12.5px;
   color: var(--muted);
@@ -411,13 +414,41 @@ details.group[open] > summary::after {
   }
 }
 @media (max-width: 600px) {
-  /* On phones in portrait the URL gets its own row, so the buttons never
+  /* On phones in portrait the URL (and its QR button) gets its own row, so the buttons never
      re-wrap as the character count grows, which would also change the
      preview's height. Wider screens fit everything on one row. */
   .url-field {
-    flex: 1 1 100%;
+    flex: 1 1 calc(100% - 50px);
   }
   .url-count {
     margin-right: auto;
   }
+}
+.qr-dialog {
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+  color: var(--fg);
+}
+.qr-dialog::backdrop {
+  background: rgb(0 0 0 / 0.6);
+}
+.qr-dialog h2 {
+  margin: 0 0 14px;
+  font-size: 18px;
+}
+.qr-code svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.qr-dialog .hint {
+  margin: 12px 0 0;
+}
+.qr-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
 }

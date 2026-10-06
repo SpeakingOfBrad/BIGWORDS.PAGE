@@ -2,6 +2,7 @@ import '../styles/editor.css';
 import { h, siteHeader, toast } from '../chrome';
 import { Display } from '../render/display';
 import { ensureFont, fontStack, FONT_NAMES } from '../render/fonts';
+import { createQrSvg } from '../render/qr';
 import { splitRawSlides } from '../render/text';
 import { parseFragment, serializeFragment, type State } from '../state/fragment';
 import {
@@ -22,6 +23,8 @@ import { parseSize, formatSize, type SizeUnit } from '../state/size';
 const STARTER: State = { message: 'Hello, **world**!', params: {} };
 const URL_WARN = 1800;
 const URL_LIMIT = 2000;
+/** Above this many characters a QR code gets dense enough to be hard to scan from a screen. */
+const QR_DENSE = 600;
 
 const ANIM_LABELS: Record<string, string> = {
   none: 'None',
@@ -45,6 +48,17 @@ function options(select: HTMLSelectElement, values: readonly string[], labels: R
 
 let idCounter = 0;
 const uid = (p: string) => `${p}-${++idCounter}`;
+
+/** A QR code icon: three finder squares and a few modules. */
+function qrIcon(): SVGSVGElement {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  for (const [k, v] of Object.entries({ viewBox: '0 0 16 16', width: '18', height: '18', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.6', 'aria-hidden': 'true' })) svg.setAttribute(k, v);
+  const path = document.createElementNS(ns, 'path');
+  path.setAttribute('d', 'M2 2h4.5v4.5H2zM9.5 2H14v4.5H9.5zM2 9.5h4.5V14H2zM9.5 9.5h2v2h-2zM12.5 12.5H14V14h-1.5zM9.5 13h1M13 9.5h1');
+  svg.append(path);
+  return svg;
+}
 
 /** The "opens in a new tab" icon: a box with an arrow leaving its corner. */
 function newTabIcon(): SVGSVGElement {
@@ -256,6 +270,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   const urlField = h('input', { class: 'url-field', type: 'text', readonly: true, 'aria-label': 'Viewer URL' });
   const urlCount = h('span', { class: 'url-count' });
   const openLink = h('a', { class: 'btn', target: '_blank', rel: 'noopener', 'aria-label': 'Open viewer (opens in a new tab)' }, 'Open viewer', newTabIcon());
+  const qrBtn = h('button', { class: 'btn btn-icon', type: 'button', 'aria-haspopup': 'dialog', 'aria-label': 'Show QR code', title: 'Show QR code' }, qrIcon());
   const copyBtn = h('button', { class: 'btn btn-primary', type: 'button' }, 'Copy URL');
   const urlAdvice = h('p', { class: 'advisory', hidden: true });
 
@@ -265,6 +280,39 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   copyBtn.addEventListener('click', async () => {
     const ok = await copyText(viewerUrl(), urlField);
     toast(ok ? 'Viewer URL copied' : 'Copy failed: select the URL and copy it');
+  });
+
+  // Shows the viewer URL as a QR code, so a phone or tablet can open the
+  // display by scanning it instead of typing the link.
+  const qrCode = h('div', { class: 'qr-code' });
+  const qrNote = h('p', { class: 'hint' });
+  const qrClose = h('button', { class: 'btn', type: 'button' }, 'Close');
+  const qrTitleId = uid('qrtitle');
+  const qrDialog = h(
+    'dialog',
+    { class: 'qr-dialog', 'aria-labelledby': qrTitleId },
+    h('h2', { id: qrTitleId }, 'Scan to open this display'),
+    qrCode,
+    qrNote,
+    h('div', { class: 'qr-actions' }, qrClose),
+  );
+  qrClose.addEventListener('click', () => qrDialog.close());
+  // A click on the backdrop lands on the dialog element itself.
+  qrDialog.addEventListener('click', (e) => {
+    if (e.target === qrDialog) qrDialog.close();
+  });
+  qrBtn.addEventListener('click', () => {
+    const url = viewerUrl();
+    const svg = createQrSvg(url);
+    qrCode.replaceChildren(svg ?? '');
+    qrCode.hidden = !svg;
+    const n = url.length;
+    qrNote.textContent = !svg
+      ? 'This link is too long for a QR code. Shorten the message or remove the image to make one.'
+      : n > QR_DENSE
+        ? 'This link is long, so the code is dense. Hold the camera close, or shorten the message for a code that scans more easily.'
+        : 'Point a phone or tablet camera at the code to open the display on it.';
+    qrDialog.showModal();
   });
 
   // ------------------------------------------------------------ controls
@@ -754,9 +802,10 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     h(
       'main',
       { class: 'editor' },
-      h('section', { class: 'editor-preview', 'aria-label': 'Preview' }, h('div', { class: 'preview-frame' }, previewStage), h('div', { class: 'preview-bar' }, urlField, urlCount, openLink, copyBtn)),
+      h('section', { class: 'editor-preview', 'aria-label': 'Preview' }, h('div', { class: 'preview-frame' }, previewStage), h('div', { class: 'preview-bar' }, urlField, qrBtn, urlCount, openLink, copyBtn)),
       controls,
     ),
+    qrDialog,
   );
 
   syncAll();

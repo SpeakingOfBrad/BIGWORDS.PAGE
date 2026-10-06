@@ -1,7 +1,7 @@
 // End-to-end smoke test against a running build (npm run build && npm run preview).
 // Usage: node scripts/smoke.mjs [baseUrl] [screenshotDir]
 import { chromium } from 'playwright';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 
 const BASE = process.argv[2] ?? 'http://localhost:4173';
 const SHOTS = process.argv[3];
@@ -184,6 +184,10 @@ await page.locator('text=Copy URL').click();
 await settle();
 const clip = await page.evaluate(() => navigator.clipboard.readText());
 check('copy URL copies viewer URL', clip.startsWith(BASE + '/#Edited%20%26%20done'), clip);
+await page.locator('button[aria-label="Show QR code"]').click();
+check('QR button opens a dialog with a code', await page.locator('dialog.qr-dialog[open] .qr-code svg').isVisible());
+await page.keyboard.press('Escape');
+check('QR dialog closes', !(await page.locator('dialog.qr-dialog').evaluate((d) => d.open)));
 await page.evaluate(() => (location.hash = '#From%20address%20bar&bg=123456'));
 await settle();
 check('address bar edit syncs controls', (await page.locator('textarea').inputValue()) === 'From address bar');
@@ -253,7 +257,30 @@ check('docs prerendered without JS', (await noJsPage.locator('.docs h1').count()
 check('prerendered docs styled', (await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.docs')).maxWidth)) === '860px');
 await noJsPage.goto(BASE + '/nope');
 check('404 page prerendered and styled', (await noJsPage.locator('.docs h1').textContent()) === 'Page not found' && (await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.docs')).maxWidth)) === '860px');
+await noJsPage.goto(BASE + '/');
+check('home prerendered without JS', (await noJsPage.locator('.hero h1').count()) === 1 && (await noJsPage.locator('.example').count()) === 8);
+check('prerendered home styled', (await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.home')).maxWidth)) === '1080px');
 await noJs.close();
+
+// A display link must never show the prerendered home page, even before the
+// app's script has loaded. Blocking the script freezes the page in that state.
+// Pages get the Caddyfile's CSP, which must allow the inline guard.
+const csp = readFileSync(new URL('../Caddyfile', import.meta.url), 'utf8').match(/Content-Security-Policy "([^"]+)"/)[1];
+const slow = await browser.newContext();
+await slow.route(/\/(src|assets)\/.*\.(js|ts)(\?.*)?$/, (route) => route.abort());
+await slow.route(/\/(#.*)?$/, async (route) => {
+  const response = await route.fetch();
+  await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': csp } });
+});
+const slowPage = await slow.newPage();
+const cspErrors = [];
+slowPage.on('console', (m) => /Content Security Policy/i.test(m.text()) && cspErrors.push(m.text()));
+await slowPage.goto(BASE + '/#Hello');
+check('display link hides the home page before JS', !(await slowPage.locator('.hero').isVisible()));
+await slowPage.goto(BASE + '/');
+check('home page shows before JS', await slowPage.locator('.hero').isVisible());
+check('CSP allows the display guard', cspErrors.length === 0, cspErrors.join(' | '));
+await slow.close();
 
 check('no console errors', errors.length === 0, errors.join(' | '));
 await browser.close();

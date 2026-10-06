@@ -1,7 +1,10 @@
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Marked } from 'marked';
 import type { Plugin } from 'vite';
+import fontManifest from './src/render/font-manifest.json';
+import { homeMarkup } from './src/home-markup.ts';
 import { NOT_FOUND, PAGES, SITE_NAME, type PageMeta } from './src/pages.ts';
 
 const VIRTUAL_ID = 'virtual:docs';
@@ -139,9 +142,20 @@ function jsonLd(site: string): string {
   return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, '\\u003c')}</script>`;
 }
 
+/**
+ * index.html holds the prerendered home page, but it also serves every
+ * display (/#message). This inline script runs before the first paint and
+ * marks the page when there's a fragment, so a display never flashes the
+ * home page while its script loads. The CSP allows it by hash: keep
+ * DISPLAY_GUARD_HASH in the Caddyfile's script-src (a unit test checks).
+ */
+export const DISPLAY_GUARD = "if(location.hash.length>1)document.documentElement.classList.add('has-display')";
+export const DISPLAY_GUARD_HASH = `'sha256-${createHash('sha256').update(DISPLAY_GUARD).digest('base64')}'`;
+const DISPLAY_GUARD_TAGS = `<style>html.has-display #app[data-prerendered]{display:none}</style>\n    <script>${DISPLAY_GUARD}</script>`;
+
 /** Fallback for visitors and crawlers without JavaScript. */
 function noscript(page: PageMeta): string {
-  if (page === PAGES.docs) return '';
+  if (page === PAGES.docs || page === PAGES.home) return '';
   const intro =
     page === PAGES.editor
       ? 'The editor needs JavaScript.'
@@ -169,11 +183,37 @@ function fillPage(template: string, page: PageMeta, site: string, noindex: boole
  * linked up front so it's styled before, or without, JavaScript. The client
  * renders the same markup over it.
  */
-function prerender(html: string, cssLinks: string, body: string): string {
+/**
+ * @font-face rules for the site's display font (the wordmark and headings),
+ * as ensureFont() in src/render/fonts.ts registers them. In the prerendered
+ * pages' <head>, the font loads as soon as text uses it rather than after the
+ * script runs, so headings don't paint in the fallback first.
+ */
+function displayFontFaces(): string {
+  const entry = Object.values(fontManifest).find((f) => f.slug === 'bebas-neue');
+  if (!entry) throw new Error('bigwords-pages: Bebas Neue missing from the font manifest');
+  return entry.faces
+    .map((f) => `@font-face{font-family:"bw-${entry.slug}";src:url("/fonts/${f.file}") format("woff2");font-weight:${f.weight};font-style:${f.style};font-display:swap;unicode-range:${f.range};}`)
+    .join('');
+}
+
+function prerender(html: string, cssLinks: string, body: string, appAttrs = ''): string {
   return html
-    .replace('</head>', `  ${cssLinks}\n  </head>`)
+    .replace('</head>', `  ${cssLinks}\n    <style>${displayFontFaces()}</style>\n  </head>`)
     .replace('<body>', '<body class="page-site">')
-    .replace('<div id="app"></div>', () => `<div id="app">${body}</div>`);
+    .replace('<div id="app"></div>', () => `<div id="app"${appAttrs}>${body}</div>`);
+}
+
+/**
+ * The home page prerendered, so its text is there without JavaScript. Marked
+ * data-prerendered: the display guard hides it on display links, and main.ts
+ * clears it when the route isn't home.
+ */
+function homePage(template: string, cssLinks: string, site: string, noindex: boolean): string {
+  const note = '<noscript><p class="noscript-note">Displays and the editor need JavaScript. The <a href="/docs">docs</a> explain how the URLs work.</p></noscript>';
+  const html = prerender(fillPage(template, PAGES.home, site, noindex), cssLinks, `${staticHeader()}${note}${homeMarkup(site)}`, ' data-prerendered');
+  // First in <head>, so it runs before anything else loads.
+  return html.replace('<head>', `<head>\n    ${DISPLAY_GUARD_TAGS}`);
 }
 
 /** Static copy of what mountNotFound() in src/notfound.ts renders, minus the fragment link. */
@@ -199,8 +239,8 @@ function notFoundPage(template: string, cssLinks: string): string {
  * share one source.
  *
  * At build time it also writes one HTML file per page (index.html,
- * editor.html, docs.html) with that page's metadata, prerenders the docs into
- * docs.html so they're readable without JavaScript, and writes 404.html,
+ * editor.html, docs.html) with that page's metadata, prerenders the home page
+ * and the docs so they're readable without JavaScript, and writes 404.html,
  * robots.txt and, when SITE_URL is set, sitemap.xml.
  */
 export default function docsPlugin(): Plugin[] {
@@ -258,8 +298,8 @@ export default function docsPlugin(): Plugin[] {
         const template = String(index.source);
         if (!template.includes('<!-- seo:head -->')) throw new Error('bigwords-pages: <!-- seo:head --> missing from index.html');
 
-        // The site styles load with the lazy chrome chunk. docs.html links
-        // them up front, so the prerendered docs are styled before JS runs.
+        // The site styles load with the lazy chrome chunk. The prerendered
+        // pages link them up front, so they're styled before JS runs.
         const css = new Set<string>();
         for (const chunk of Object.values(bundle)) {
           if (chunk.type === 'chunk' && chunk.moduleIds.some((id) => id.endsWith('/src/chrome.ts'))) {
@@ -275,7 +315,7 @@ export default function docsPlugin(): Plugin[] {
         const article = renderDocs().replace(/\{origin\}|%7Borigin%7D/gi, origin);
         const docs = prerender(fillPage(template, PAGES.docs, site, noindex), cssLinks, `${staticHeader('docs')}<main><article class="docs">${article}</article></main>`);
 
-        writeFileSync(resolve(out, 'index.html'), fillPage(template, PAGES.home, site, noindex));
+        writeFileSync(resolve(out, 'index.html'), homePage(template, cssLinks, site, noindex));
         writeFileSync(resolve(out, 'editor.html'), fillPage(template, PAGES.editor, site, noindex));
         writeFileSync(resolve(out, 'docs.html'), docs);
         writeFileSync(resolve(out, '404.html'), notFoundPage(template, cssLinks));

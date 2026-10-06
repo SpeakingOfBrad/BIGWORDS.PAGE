@@ -27,9 +27,21 @@ export function safeDecode(s: string): string {
   }
 }
 
+/**
+ * Some apps percent-encode a link again before opening it (an iOS QR scan
+ * handing the link to another browser has been seen doing it), so every %
+ * arrives as %25 and the message would show its escapes. serializeFragment
+ * always encodes spaces, so a fragment whose only escapes are %25XX was
+ * encoded twice and is decoded once more. A real message only looks like
+ * that if it is nothing but literal %XX text with no spaces.
+ */
+function undoDoubleEncoding(raw: string): string {
+  return /%25[0-9a-f]{2}/i.test(raw) && !/%(?!25[0-9a-f]{2})/i.test(raw) ? safeDecode(raw) : raw;
+}
+
 /** Parse a fragment (with or without the leading `#`). */
 export function parseFragment(hash: string): State {
-  const raw = hash.startsWith('#') ? hash.slice(1) : hash;
+  const raw = undoDoubleEncoding(hash.startsWith('#') ? hash.slice(1) : hash);
   const [first, ...rest] = raw.split('&');
   const params: Record<string, string> = {};
   for (const seg of rest) {

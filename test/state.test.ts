@@ -10,6 +10,17 @@ describe('fragment', () => {
     expect(s.params).toEqual({ bg: '000000', fg: 'ffffff', anim: 'pulse' });
   });
 
+  it('undoes a second round of percent-encoding', () => {
+    const s = parseFragment('#Hello,%2520**world**!%257C%257C%257Bcountdown%257D&until=2026-10-06T18:15:00Z&bg=%2523000000');
+    expect(s.message).toBe('Hello, **world**!||{countdown}');
+    expect(s.params).toEqual({ until: '2026-10-06T18:15:00Z', bg: '#000000' });
+  });
+
+  it('keeps a literal %XX when the fragment is encoded once', () => {
+    expect(parseFragment('#50%25%20off%2520today').message).toBe('50% off%20today');
+    expect(parseFragment('#100%25').message).toBe('100%');
+  });
+
   it('handles a fragment with no message', () => {
     const s = parseFragment('#&bg=ff0000');
     expect(s.message).toBe('');

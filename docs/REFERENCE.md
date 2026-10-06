@@ -280,7 +280,7 @@ The editor shows a live preview that renders exactly what the viewer shows, plus
 
 - The address bar always mirrors the current state, without filling your history.
 - Editing the fragment in the address bar updates the controls.
-- **Copy URL** copies the viewer URL (the same fragment without `/editor`). **Open viewer** opens it in a new tab.
+- **Copy URL** copies the viewer URL (the same fragment without `/editor`). **Open viewer** opens it in a new tab. The QR button next to the URL shows it as a QR code, so a phone or tablet can scan it to open the display.
 - Parameters left at their defaults are dropped from the URL to keep it short.
 
 ## Privacy

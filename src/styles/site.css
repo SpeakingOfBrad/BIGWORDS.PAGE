@@ -547,3 +547,13 @@ body.page-site {
   background: var(--accent);
   color: var(--accent-fg);
 }
+.noscript-note {
+  box-sizing: border-box;
+  width: calc(100% - 40px);
+  max-width: 1040px;
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-2);
+}

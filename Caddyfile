@@ -6,7 +6,7 @@
 		Referrer-Policy no-referrer
 		X-Content-Type-Options nosniff
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		Content-Security-Policy "default-src 'self'; script-src 'self'; connect-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'sha256-WRESlibDb7NqrJR/1fFgS12DPHVooiFsdVnRlueDEBE='; connect-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
 		-Server
 	}
 }

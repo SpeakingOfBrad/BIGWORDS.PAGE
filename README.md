@@ -7,7 +7,7 @@ https://your-domain/#Hello%20World&bg=000000&fg=ffd60a&font=4&anim=pulse
 ```
 
 - **Viewer** `/#…`: fullscreen render, no UI.
-- **Editor** `/editor#…`: live preview and controls. The address bar always mirrors the state, and Share copies the viewer link.
+- **Editor** `/editor#…`: live preview and controls. The address bar always mirrors the state, **Copy URL** copies the viewer link, and the QR button shows it as a code to scan.
 - **Docs** `/docs`: the full reference, built from [`docs/REFERENCE.md`](docs/REFERENCE.md).
 
 Everything lives in the URL fragment, which browsers never send to the server. Features: auto-fit sizing, a small markdown subset with relative headings, slides (`||`), countdowns (`{countdown}` + `until`), animations, bundled open-source fonts, aspect-ratio framing, client-side QR codes and embedded images. See the **[reference](docs/REFERENCE.md)** for every parameter.
@@ -42,7 +42,7 @@ Project layout:
 
 ## Self-hosting
 
-The build is a folder of static files, so any static host works if it serves `index.html` for `/`, `editor.html` for `/editor`, `docs.html` for `/docs`, and `404.html` with status 404 for any other path. The supported way to run it is the Docker image.
+The build is a folder of static files, so any static host works if it serves `index.html` for `/`, `editor.html` for `/editor`, `docs.html` for `/docs`, and `404.html` with status 404 for any other path. If your host sends a Content-Security-Policy, copy the `script-src` from the [`Caddyfile`](Caddyfile): `index.html` has one inline script, allowed by its hash. The supported way to run it is the Docker image.
 
 ### Docker
 
@@ -86,7 +86,7 @@ All optional. Set them as environment variables for `npm run build`, or as build
 
 ### SEO
 
-The build writes one HTML file per page (`index.html`, `editor.html`, `docs.html`), each with its own title, description and Open Graph tags. Page titles and descriptions live in [`src/pages.ts`](src/pages.ts), which the runtime also uses for the tab title. `docs.html` contains the whole prerendered reference, so it reads without JavaScript. The build also writes `robots.txt` and a `noindex` `404.html` that hosts serve with status 404 for unknown paths, so typos and stale links aren't indexed as copies of the home page. `npm run preview` does the same.
+The build writes one HTML file per page (`index.html`, `editor.html`, `docs.html`), each with its own title, description and Open Graph tags. Page titles and descriptions live in [`src/pages.ts`](src/pages.ts), which the runtime also uses for the tab title. `index.html` and `docs.html` contain the prerendered home page and reference, so they read without JavaScript. `index.html` also serves every display (`/#…`), so a small inline script in its `<head>` hides the home page when the URL has a fragment, before anything is drawn; its hash is in the Caddyfile's CSP, and a unit test checks that they match. The build also writes `robots.txt` and a `noindex` `404.html` that hosts serve with status 404 for unknown paths, so typos and stale links aren't indexed as copies of the home page. `npm run preview` does the same.
 
 The social card `public/og.png` and `public/apple-touch-icon.png` are rendered with the real viewer by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts or the favicon.
 

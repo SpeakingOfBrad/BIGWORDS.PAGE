@@ -1,0 +1,76 @@
+// The home page as an HTML string. The build prerenders it into index.html,
+// so the page reads without JavaScript, and home.ts renders the same markup
+// at runtime before attaching the live previews. No DOM access here: the
+// build runs it in Node.
+
+import { SITE_NAME, SOURCE_URL } from './pages';
+
+export const HERO = 'Say%20it%20**big.**||Any%20screen.%0AAny%20size.||No%20app.%20No%20login.%0AJust%20a%20**URL.**&bg=111111&fg=ffd60a&font=4&interval=3';
+
+const nextNewYear = () => `${new Date().getFullYear() + 1}-01-01T00:00:00`;
+
+export interface Example {
+  title: string;
+  fragment: string;
+}
+
+/** The example cards. `origin` is the site's origin, for the QR code example. */
+export const examples = (origin: string): Example[] => [
+  { title: 'Plain text', fragment: 'Hello%20World' },
+  { title: 'Colors, font, newline', fragment: '%23%20Gate%2012%0ABoarding%20now&bg=0b3d91&fg=ffffff&font=2' },
+  { title: 'Countdown', fragment: `Happy%20New%20Year%20in%0A{countdown}&until=${nextNewYear()}&font=5&cdfmt=colon&zero=Happy%20New%20Year!` },
+  { title: 'Pulse animation', fragment: 'ON%20AIR&bg=b00020&fg=ffffff&font=4&anim=pulse' },
+  { title: 'Slides', fragment: 'Welcome!||Wi-Fi:%20**guest**%0APassword:%20*sunshine*&font=1&interval=4' },
+  { title: 'Scrolling marquee', fragment: 'Breaking%20news:%20this%20text%20scrolls%20forever&anim=scroll&size-max=40vh&font=1&bg=000000&fg=00ff66' },
+  { title: 'Rainbow', fragment: 'Happy%20Birthday!&anim=rainbow&font=6' },
+  { title: 'QR code', fragment: `Scan%20to%20open%0Athe%20editor&qr=${origin}/editor&qrpos=below&font=1&bg=ffffff&fg=111111` },
+];
+
+const STEPS: [string, string][] = [
+  ['Type a message after the #. Spaces are %20.', 'Hello%20World'],
+  ['Add settings with &key=value.', 'Hello%20World&bg=000000&fg=ffd60a&font=4'],
+  ['%0A starts a new line. # makes a heading (write it as %23).', '%23%20Room%20204%0AMeeting%20in%20progress'],
+  ['|| splits the message into slides.', 'Coffee%20%E2%98%95||Tea%20%F0%9F%8D%B5||Water%20%F0%9F%92%A7&interval=2'],
+];
+
+const FEATURES: [string, string][] = [
+  ['Auto-fit', 'Text grows to fill any screen, from a phone to a stadium board.'],
+  ['Markdown', '**bold**, *italic*, # and ## headings, real line breaks.'],
+  ['Slides', 'Split with || and they rotate on a timer.'],
+  ['Countdowns', 'Put {countdown} anywhere and set &until=.'],
+  ['QR codes & images', 'Generated in your browser. No third-party services.'],
+  ['Private by design', 'The message lives in the URL fragment, which browsers never send to a server.'],
+];
+
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/**
+ * The home page's <main> and <footer>. `origin` makes the example URLs
+ * absolute; the build passes SITE_URL, which may be empty.
+ */
+export function homeMarkup(origin: string): string {
+  const url = (fragment: string) => esc(`${origin}/#${fragment}`);
+  const href = (path: string, fragment: string) => esc(`${path}#${fragment}`);
+  const cards = examples(origin).map(
+    (ex) =>
+      `<div class="example"><a href="${href('/', ex.fragment)}" style="text-decoration:none" aria-label="Open example: ${esc(ex.title)}">` +
+      `<div class="thumb"><div></div></div><div class="meta"><strong>${esc(ex.title)}</strong><code>${url(ex.fragment)}</code></div></a>` +
+      `<div class="example-actions"><a class="btn btn-sm" href="${href('/', ex.fragment)}">Open</a><a class="btn btn-sm" href="${href('/editor', ex.fragment)}">Edit</a></div></div>`,
+  );
+  return (
+    '<main class="home">' +
+    '<section class="hero"><div><h1>Big words for any screen</h1>' +
+    '<p class="lede">Put a message in a URL and it fills the screen. No account, no app, no server storing anything. The link is the whole display, so you can share it, bookmark it, or type it by hand.</p>' +
+    `<div class="hero-actions"><a class="btn btn-primary" href="/editor">Open the editor</a><a class="btn" href="/docs">Read the docs</a><a class="btn" href="${href('/', HERO)}">View fullscreen</a></div></div>` +
+    `<div class="demo"><div class="demo-frame"><div></div></div><div class="demo-url"><a href="${href('/', HERO)}">${url(HERO)}</a></div></div></section>` +
+    '<section class="section"><h2>Make one by hand</h2><p>Use the editor if you like, but you never need it. Every display is just a URL.</p><ol class="steps">' +
+    STEPS.map(([text, frag]) => `<li><div><p>${esc(text)}</p><a class="url" href="${href('/', frag)}">${url(frag)}</a></div></li>`).join('') +
+    '</ol></section>' +
+    `<section class="section"><h2>Examples</h2><p>Every card is a working link. Open it fullscreen, or load it into the editor and change it.</p><div class="examples">${cards.join('')}</div></section>` +
+    '<section class="section"><h2>What it does</h2><div class="features">' +
+    FEATURES.map(([t, d]) => `<div class="feature"><strong>${esc(t)}</strong><span>${esc(d)}</span></div>`).join('') +
+    '</div></section></main>' +
+    `<footer class="site-footer"><p>${SITE_NAME} is <a href="${esc(SOURCE_URL)}">open source</a> under the MIT license. Fonts are bundled under their own open licenses.</p>` +
+    `<p><a href="/docs">Docs</a> · <a href="/editor">Editor</a> · <a href="${esc(SOURCE_URL)}">GitHub</a></p></footer>`
+  );
+}
