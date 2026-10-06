@@ -77,8 +77,9 @@ When typing by hand you only strictly need to encode spaces, new lines, `&` and 
 | `anim` | Animation | `none`, `pulse`, `flash`, `shake`, `bounce`, `scroll`, `crawl`, `typewriter`, `fadein`, `rainbow` | `none` |
 | `speed` | Animation speed | `slow`, `normal`, `fast` | `normal` |
 | `ratio` | Fix the display to an aspect ratio | `W:H` (`16:9`, `4:3`, `1:1`, `9:16`, `21:9`…) | *(fill the screen)* |
-| `qr` | Show a QR code for a URL | Any percent-encoded URL | *(none)* |
+| `qr` | Show a QR code | A percent-encoded URL, or a Wi-Fi, phone, text, email or location code, see [QR code](#qr-code) | *(none)* |
 | `qrpos` | QR code position | `tl`, `tr`, `bl`, `br`, `below` | `br` |
+| `qrsize` | QR code size, in percent of the display's shorter side | Whole number from 10 to 50 | `25` |
 | `img` | Show an image | A percent-encoded public image URL | *(none)* |
 | `imgpos` | Image position | `bg`, `full`, `above`, `below` | `bg` |
 | `refresh` | Reload the page every N seconds | Whole number from 1 to 86400 (larger values count as 86400) | *(none)* |
@@ -247,11 +248,111 @@ The editor counts the URL's characters and warns as it nears about 2,000. Some m
 
 ## QR code
 
-`qr` takes a percent-encoded URL and draws its QR code in your browser. No outside service is used. `qrpos` puts it in a corner (`tl`, `tr`, `bl`, `br`) or centered below the text (`below`). It scales with the display and is always black on white with a quiet zone, so it scans whatever your colors are.
+`qr` puts a QR code on the display, drawn in your browser with no outside service. Its value is the text the code holds, and how it starts decides what the scanning phone does:
 
-Encode any `&` inside the target URL as `%26`.
+| Type | `qr` starts with | Phone action |
+|---|---|---|
+| [Link](#link) | Any URL, such as `https://` | Opens the link |
+| [Wi-Fi](#wi-fi) | `WIFI:` | Offers to join the network |
+| [Phone call](#phone-call) | `tel:` | Offers to call the number |
+| [Text/SMS](#text-sms) | `SMSTO:` | Opens a new text message |
+| [Email](#email) | `mailto:` | Opens a new email |
+| [Location](#location) | `geo:` | Opens a maps app (Android) |
+| [Plain text](#plain-text) | Anything else | Shows the text |
+
+The editor's **QR code** section has a form for each type and writes the URL for you. Writing one by hand, follow the usual [encoding](#encoding) inside the `qr` value too: spaces are `%20` and `&` is `%26`.
+
+### Placement and size
+
+| Param | What it does | Values | Default |
+|---|---|---|---|
+| `qrpos` | Where the code goes | A corner (`tl`, `tr`, `bl`, `br`), or centered below the text (`below`) | `br` |
+| `qrsize` | Size, in percent of the display's shorter side | Whole number from `10` to `50` | `25` |
+
+The code scales with the screen. Larger codes scan from farther away, and a long `qr` value makes a denser code, which needs a larger size. The code is always black on white with a quiet zone, so it scans whatever your colors are.
+
+### Link
+
+`qr=<URL>`: any URL, such as `https://example.com/menu`. Inside it, write `&` as `%26`, `#` as `%23` and `%` as `%25` (so an escaped space, `%20`, becomes `%2520`).
 
 [`{origin}/#Scan%20me&qr={origin}/docs&qrpos=below`]({origin}/#Scan%20me&qr={origin}/docs&qrpos=below)
+
+### Wi-Fi
+
+`qr=WIFI:T:<security>;S:<network>;P:<password>;;`
+
+Phones that scan it offer to join the network. Each field ends in `;`, the fields can come in any order, and the whole value ends with one more `;`.
+
+| Field | Meaning | Values | Required |
+|---|---|---|---|
+| `T` | Security | `WPA` (also covers WPA2 and WPA3), `WEP`, or `nopass` for an open network | Yes |
+| `S` | Network name (SSID), exactly as the phone lists it | Text | Yes |
+| `P` | Password | Text | Yes, unless `T:nopass`; leave it out then |
+| `H` | Hidden network | `true` | No; leave it out for a visible network |
+
+In the network name and password, first put a `\` before any `\`, `;`, `,`, `:` or `"`. Then encode the result for the URL: spaces become `%20` and each `\` becomes `%5C`. For the network `Cafe Guest` with the password `latte;art`:
+
+| Step | Value |
+|---|---|
+| Fields | `T:WPA;` `S:Cafe Guest;` `P:latte\;art;` |
+| Code text | `WIFI:T:WPA;S:Cafe Guest;P:latte\;art;;` |
+| In the URL | `qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;` |
+
+[`{origin}/#Free%20Wi-Fi%0AScan%20to%20join&qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;&qrpos=below&qrsize=35`]({origin}/#Free%20Wi-Fi%0AScan%20to%20join&qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;&qrpos=below&qrsize=35)
+
+An open network: `qr=WIFI:T:nopass;S:Library;;`. A hidden one: `qr=WIFI:T:WPA;S:Back%20Office;P:secret123;H:true;;`.
+
+The password is in the link and in the code, so anyone with the link or a view of the screen can read it.
+
+### Phone call
+
+`qr=tel:<number>`
+
+The number is required. Use the international form, such as `+15551234567`, so it works from any country; the `+` can be typed as is. Spaces and dashes in the number are ignored, so `tel:+1-555-123-4567` works too.
+
+[`{origin}/#%23%20Lost%20dog%0AMax,%20brown%20terrier%0ACall%20555-123-4567&qr=tel:+15551234567&qrpos=below&qrsize=30`]({origin}/#%23%20Lost%20dog%0AMax,%20brown%20terrier%0ACall%20555-123-4567&qr=tel:+15551234567&qrpos=below&qrsize=30)
+
+### Text/SMS
+
+`qr=SMSTO:<number>:<message>`
+
+| Field | Meaning | Required |
+|---|---|---|
+| Number | The number to text, as for [Phone call](#phone-call) | Yes |
+| Message | Filled in for the sender to edit before sending. It can contain `:`. Leave it out along with the `:` before it for an empty message. | No |
+
+[`{origin}/#%23%20Found%20a%20cat?%0AText%20us&qr=SMSTO:+15551234567:I%20found%20your%20cat&qrpos=below&qrsize=30`]({origin}/#%23%20Found%20a%20cat?%0AText%20us&qr=SMSTO:+15551234567:I%20found%20your%20cat&qrpos=below&qrsize=30)
+
+### Email
+
+`qr=mailto:<address>?subject=<subject>%26body=<message>`
+
+| Field | Meaning | Required |
+|---|---|---|
+| Address | Who the email goes to | Yes |
+| `subject` | Filled-in subject | No |
+| `body` | Filled-in message | No |
+
+Leave out a field you don't need, and the `?` too if there are none. The `&` between `subject` and `body` must be written `%26`.
+
+[`{origin}/#Questions?%0AEmail%20us&qr=mailto:hello@example.com?subject=Question%26body=Hi!&qrpos=below`]({origin}/#Questions?%0AEmail%20us&qr=mailto:hello@example.com?subject=Question%26body=Hi!&qrpos=below)
+
+### Location
+
+`qr=geo:<latitude>,<longitude>`
+
+| Field | Meaning | Values | Required |
+|---|---|---|---|
+| Latitude | North (+) or south (−) | Decimal degrees, `-90` to `90` | Yes |
+| Longitude | East (+) or west (−) | Decimal degrees, `-180` to `180` | Yes |
+
+Android opens it in a maps app. iPhone cameras may only show it as text, so for iPhones use a [link](#link) to a map instead.
+
+[`{origin}/#Meet%20here&qr=geo:40.6892,-74.0445&qrpos=below`]({origin}/#Meet%20here&qr=geo:40.6892,-74.0445&qrpos=below)
+
+### Plain text
+
+Any value that isn't one of the above, such as `qr=Table%2012`, goes in the code as text, decoded like the rest of the URL (`Table 12`). The phone shows the text and does nothing else.
 
 ## Image
 
@@ -285,7 +386,7 @@ The editor shows a live preview that renders exactly what the viewer shows, plus
 
 ## Privacy
 
-The message and settings live only in the URL fragment, which browsers do not send to servers. BIGWORDS.PAGE itself includes no analytics, cookies or tracking.
+The message and settings live only in the URL fragment, which browsers do not send to servers. BIGWORDS.PAGE's own code adds no analytics, cookies or tracking. A site that hosts it may add analytics of its own: check that site's notes, which may follow at the end of this page, or its privacy policy.
 
 ## Self-hosting
 

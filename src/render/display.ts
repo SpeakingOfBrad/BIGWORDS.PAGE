@@ -23,7 +23,6 @@ const BASE_DURATION: Record<string, number> = {
 const SLIDE_TRANSITION_MS = 600;
 const CODE_FONT = 5; // JetBrains Mono, loaded only when a message has `code`
 const FONT_WAIT_MS = 1500; // longest the text stays hidden waiting for its font
-const QR_FRACTION = 0.25;
 
 type FitMode = 'both' | 'height' | 'width';
 
@@ -376,9 +375,9 @@ export class Display {
     this.qrWrap = wrap;
     // The QR encoder is only downloaded when a display uses it.
     const text = s.qr;
-    void import('./qr').then(({ createQrSvg }) => {
+    void Promise.all([import('./qr'), import('../state/qr-payload')]).then(([{ createQrSvg }, { qrCodeText }]) => {
       if (this.qrWrap !== wrap) return;
-      const svg = createQrSvg(text);
+      const svg = createQrSvg(qrCodeText(text));
       if (svg) wrap.append(svg);
       else wrap.remove();
     });
@@ -573,7 +572,7 @@ export class Display {
       left: `${(pl / 100) * bw}px`,
     });
     if (this.qrWrap) {
-      const q = Math.max(48, Math.round(Math.min(bw, bh) * QR_FRACTION));
+      const q = Math.max(48, Math.round((Math.min(bw, bh) * s.qrsize) / 100));
       const m = Math.round(Math.min(bw, bh) * 0.03);
       this.qrWrap.style.setProperty('--bw-qr', `${q}px`);
       this.qrWrap.style.setProperty('--bw-qr-m', `${m}px`);

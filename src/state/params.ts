@@ -29,6 +29,7 @@ export interface Settings {
   ratio: [number, number] | null;
   qr: string | null;
   qrpos: QrPos;
+  qrsize: number; // percent of the display's shorter side
   img: string | null;
   imgpos: ImgPos;
   refresh: number | null;
@@ -53,6 +54,7 @@ export const PARAM_DEFAULTS: Readonly<Record<string, string>> = {
   ratio: '',
   qr: '',
   qrpos: 'br',
+  qrsize: '25',
   img: '',
   imgpos: 'bg',
   refresh: '',
@@ -146,6 +148,15 @@ export function parseUntil(v: string | undefined): Date | null {
   return date;
 }
 
+/** Smallest and largest `qrsize`, in percent of the display's shorter side. */
+export const QR_SIZE_MIN = 10;
+export const QR_SIZE_MAX = 50;
+
+function qrSize(v: string | undefined): number {
+  const n = posInt(v);
+  return n === null ? 25 : Math.min(QR_SIZE_MAX, Math.max(QR_SIZE_MIN, n));
+}
+
 function url(v: string | undefined): string | null {
   const s = v?.trim() ?? '';
   return s ? s : null;
@@ -178,6 +189,7 @@ export function resolveSettings(state: State): Settings {
     ratio: parseRatio(p.ratio),
     qr: url(p.qr),
     qrpos: oneOf(QR_POSITIONS, p.qrpos, 'br'),
+    qrsize: qrSize(p.qrsize),
     img: imageUrl(p.img),
     imgpos: oneOf(IMG_POSITIONS, p.imgpos, 'bg'),
     refresh: seconds(p.refresh),

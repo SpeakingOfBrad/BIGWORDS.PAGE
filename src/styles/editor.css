@@ -131,8 +131,26 @@ details.group[open] > summary::after {
   font-size: 14px;
   color: var(--muted);
 }
+.lbl .opt,
+.check .opt {
+  display: block;
+  font-size: 11.5px;
+  opacity: 0.8;
+}
+.check .opt {
+  display: inline;
+  color: var(--muted);
+}
+.check .opt::before {
+  content: '(';
+}
+.check .opt::after {
+  content: ')';
+}
 .page-editor input[type='text'],
 .page-editor input[type='url'],
+.page-editor input[type='tel'],
+.page-editor input[type='email'],
 .page-editor input[type='number'],
 .page-editor input[type='datetime-local'],
 .page-editor select,
@@ -151,6 +169,8 @@ details.group[open] > summary::after {
 @media (pointer: coarse) {
   .page-editor input[type='text'],
   .page-editor input[type='url'],
+  .page-editor input[type='tel'],
+  .page-editor input[type='email'],
   .page-editor input[type='number'],
   .page-editor input[type='datetime-local'],
   .page-editor select,

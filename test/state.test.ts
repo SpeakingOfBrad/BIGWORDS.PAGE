@@ -94,8 +94,17 @@ describe('params', () => {
     expect(resolveSettings({ message: '', params: { zero: 'Go!' } }).zero).toEqual({ kind: 'message', message: 'Go!' });
   });
 
+  it('qrsize is a percent from 10 to 50, defaulting to 25', () => {
+    const qrsize = (v?: string) => resolveSettings({ message: '', params: v === undefined ? {} : { qrsize: v } }).qrsize;
+    expect(qrsize()).toBe(25);
+    expect(qrsize('40')).toBe(40);
+    expect(qrsize('5')).toBe(10);
+    expect(qrsize('90')).toBe(50);
+    expect(qrsize('big')).toBe(25);
+  });
+
   it('prunes defaults', () => {
-    expect(pruneDefaults({ bg: 'auto', fg: 'ffffff', pad: '5,5', anim: 'none', speed: 'fast', qr: '' })).toEqual({ fg: 'ffffff', speed: 'fast' });
+    expect(pruneDefaults({ bg: 'auto', fg: 'ffffff', pad: '5,5', anim: 'none', speed: 'fast', qr: '', qrsize: '25' })).toEqual({ fg: 'ffffff', speed: 'fast' });
   });
 });
 

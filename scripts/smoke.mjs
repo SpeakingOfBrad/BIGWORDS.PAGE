@@ -145,6 +145,11 @@ await page.goto(BASE + '/#Scan&qr=https://example.com/a?b=1%26c=2&qrpos=below');
 await page.waitForSelector('.bw-qr svg', { timeout: 3000 }).catch(() => null);
 check('QR renders', (await page.locator('.bw-qr svg path').count()) === 1);
 await shot('viewer-qr');
+const qrWidth = () => page.locator('.bw-qr').evaluate((e) => e.getBoundingClientRect().width);
+const defaultQr = await qrWidth();
+await page.goto(BASE + '/#Join&qr=WIFI:T:WPA;S:Guest;P:sunshine;;&qrsize=50');
+await page.waitForSelector('.bw-qr svg', { timeout: 3000 }).catch(() => null);
+check('qrsize=50 draws a code twice the default size', Math.abs((await qrWidth()) - 2 * defaultQr) <= 2, `${defaultQr} → ${await qrWidth()}`);
 
 // Animations
 for (const anim of ['pulse', 'scroll', 'crawl', 'typewriter', 'rainbow']) {
@@ -188,6 +193,18 @@ await page.locator('button[aria-label="Show QR code"]').click();
 check('QR button opens a dialog with a code', await page.locator('dialog.qr-dialog[open] .qr-code svg').isVisible());
 await page.keyboard.press('Escape');
 check('QR dialog closes', !(await page.locator('dialog.qr-dialog').evaluate((d) => d.open)));
+const qrForm = page.locator('details', { has: page.locator('summary', { hasText: 'QR code' }) });
+await qrForm.locator('summary').click();
+await qrForm.getByLabel('Type', { exact: true }).selectOption('wifi');
+await qrForm.getByLabel('Network', { exact: true }).fill('Cafe;5G');
+await qrForm.getByLabel('Password', { exact: true }).fill('pw');
+await settle();
+check('QR form builds a Wi-Fi code', page.url().includes('qr=WIFI:T:WPA;S:Cafe%5C;5G;P:pw;;'), page.url());
+await qrForm.getByLabel('Type', { exact: true }).selectOption('email');
+check('QR form marks optional fields', (await qrForm.locator('label', { hasText: 'Subject' }).innerText()).includes('optional') && !(await qrForm.locator('label', { hasText: 'To' }).first().innerText()).includes('optional'));
+await page.evaluate(() => (location.hash = '#Call&qr=tel:+15551234567'));
+await settle();
+check('address bar QR edit fills the form', (await qrForm.getByLabel('Type', { exact: true }).inputValue()) === 'tel' && (await qrForm.getByLabel('Phone', { exact: true }).inputValue()) === '+15551234567');
 await page.evaluate(() => (location.hash = '#From%20address%20bar&bg=123456'));
 await settle();
 check('address bar edit syncs controls', (await page.locator('textarea').inputValue()) === 'From address bar');

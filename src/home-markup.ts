@@ -20,7 +20,7 @@ export const examples = (origin: string): Example[] => [
   { title: 'Colors, font, newline', fragment: '%23%20Gate%2012%0ABoarding%20now&bg=0b3d91&fg=ffffff&font=2' },
   { title: 'Countdown', fragment: `Happy%20New%20Year%20in%0A{countdown}&until=${nextNewYear()}&font=5&cdfmt=colon&zero=Happy%20New%20Year!` },
   { title: 'Pulse animation', fragment: 'ON%20AIR&bg=b00020&fg=ffffff&font=4&anim=pulse' },
-  { title: 'Slides', fragment: 'Welcome!||Wi-Fi:%20**guest**%0APassword:%20*sunshine*&font=1&interval=4' },
+  { title: 'Slides with a Wi-Fi code', fragment: 'Welcome!||Wi-Fi:%20**Cafe%20Guest**%0APassword:%20*latte;art*&font=1&qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;&interval=4' },
   { title: 'Scrolling marquee', fragment: 'Breaking%20news:%20this%20text%20scrolls%20forever&anim=scroll&size-max=40vh&font=1&bg=000000&fg=00ff66' },
   { title: 'Rainbow', fragment: 'Happy%20Birthday!&anim=rainbow&font=6' },
   { title: 'QR code', fragment: `Scan%20to%20open%0Athe%20editor&qr=${origin}/editor&qrpos=below&font=1&bg=ffffff&fg=111111` },
@@ -38,7 +38,7 @@ const FEATURES: [string, string][] = [
   ['Markdown', '**bold**, *italic*, # and ## headings, real line breaks.'],
   ['Slides', 'Split with || and they rotate on a timer.'],
   ['Countdowns', 'Put {countdown} anywhere and set &until=.'],
-  ['QR codes & images', 'Generated in your browser. No third-party services.'],
+  ['QR codes & images', 'Links, Wi-Fi, calls, texts and email, generated in your browser. No third-party services.'],
   ['Private by design', 'The message lives in the URL fragment, which browsers never send to a server.'],
 ];
 
