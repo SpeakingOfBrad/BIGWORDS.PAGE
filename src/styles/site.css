@@ -1,0 +1,549 @@
+/* Chrome for the home, docs and editor pages. */
+:root {
+  --bg: #0d0e11;
+  --bg-2: #16181d;
+  --bg-3: #1f222a;
+  --fg: #f2f3f5;
+  --muted: #9aa0ab;
+  --line: #2b2f38;
+  /* The accent is always a yellow fill with dark text on it. Yellow is never
+     used for text, because it has no contrast on light backgrounds. On light
+     pages, fills get a dark gold outline (--accent-edge, ≥ 4.8:1) so their
+     shape stays visible; on dark pages the outline is the yellow itself. Focus
+     rings use the same edge color. */
+  --accent: #ffd60a;
+  --accent-fg: #111;
+  --accent-edge: #ffd60a;
+  --accent-tint: #2a250a;
+  --warn: #ffb020;
+  --danger: #ff5c5c;
+  --radius: 10px;
+  --mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --display: 'bw-bebas-neue', Impact, 'Arial Narrow', sans-serif;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fafaf7;
+    --bg-2: #ffffff;
+    --bg-3: #f0f0ea;
+    --fg: #15161a;
+    --muted: #5d636e;
+    --line: #dcdcd4;
+    --accent: #ffd60a;
+    --accent-fg: #111;
+    --accent-edge: #8a6100;
+    --accent-tint: #fff4c2;
+    --warn: #a35f00;
+    --danger: #c62828;
+    color-scheme: light;
+  }
+}
+body.page-site {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 var(--sans);
+  accent-color: var(--accent);
+  -webkit-font-smoothing: antialiased;
+}
+.page-site :where(a) {
+  color: inherit;
+}
+.page-site code,
+.page-site pre {
+  font-family: var(--mono);
+  font-size: 0.9em;
+}
+.page-site :not(pre) > code {
+  background: var(--bg-3);
+  padding: 0.1em 0.35em;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+
+/* Header */
+.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+.wordmark {
+  font-family: var(--display);
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: baseline;
+}
+.wordmark .dot {
+  display: inline-block;
+  width: 0.2em;
+  height: 0.2em;
+  margin: 0 0.07em;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-edge);
+}
+.site-nav {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.site-nav a {
+  text-decoration: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 500;
+}
+.site-nav a:hover,
+.site-nav a[aria-current='page'] {
+  color: var(--fg);
+  background: var(--bg-3);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.btn:hover {
+  border-color: var(--muted);
+}
+.btn-primary {
+  background: var(--accent);
+  border-color: var(--accent-edge);
+  color: var(--accent-fg);
+}
+.btn-primary:hover {
+  filter: brightness(1.05);
+  border-color: var(--accent-edge);
+}
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Home */
+.home {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px 64px;
+}
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 40px;
+  align-items: center;
+}
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: clamp(48px, 8vw, 92px);
+  line-height: 0.95;
+  margin: 0 0 16px;
+  letter-spacing: 0.01em;
+}
+.hero p.lede {
+  font-size: 18px;
+  color: var(--muted);
+  margin: 0 0 24px;
+  max-width: 34em;
+}
+.hero-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.demo {
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+}
+.demo-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+}
+.demo-frame > .bw-stage {
+  position: absolute;
+  inset: 0;
+}
+.demo-url {
+  padding: 10px 14px;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.demo-url a {
+  text-decoration: none;
+}
+.demo-url a:hover {
+  text-decoration: underline;
+}
+.section {
+  margin-top: 64px;
+}
+.section h2 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 40px;
+  letter-spacing: 0.01em;
+  margin: 0 0 8px;
+  line-height: 1;
+}
+.section > p {
+  color: var(--muted);
+  margin: 0 0 24px;
+  max-width: 44em;
+}
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  counter-reset: step;
+}
+.steps li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.steps li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  /* Bebas Neue's line box has more room below the digits than above, so
+     centering the box leaves the digits ~2px high. Measured, not guessed. */
+  padding-top: 4px;
+  font-family: var(--display);
+  font-size: 26px;
+  line-height: 1;
+  background: var(--accent);
+  color: var(--accent-fg);
+  border: 1.5px solid var(--accent-edge);
+  border-radius: 8px;
+}
+.steps p {
+  margin: 0 0 6px;
+}
+.steps a.url {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  overflow-wrap: anywhere;
+}
+.examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+.example {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+}
+.example .thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  pointer-events: none;
+}
+.example .thumb > .bw-stage {
+  position: absolute;
+  inset: 0;
+}
+.example .meta {
+  padding: 10px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.example .meta strong {
+  font-size: 15px;
+}
+.example .meta code {
+  font-size: 11.5px;
+  color: var(--muted);
+  background: none !important;
+  padding: 0 !important;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.example:hover {
+  border-color: var(--muted);
+}
+.example-actions {
+  display: flex;
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+.feature {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.feature strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.feature span {
+  color: var(--muted);
+  font-size: 14.5px;
+}
+.site-footer {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  padding: 24px 20px 40px;
+  text-align: center;
+}
+.site-footer p {
+  margin: 4px 0;
+}
+
+@media (max-width: 800px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .home {
+    padding-top: 28px;
+  }
+}
+
+/* Docs */
+.docs {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+.docs h1 {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 56px;
+  line-height: 1;
+  margin: 8px 0 16px;
+}
+.docs h2 {
+  margin-top: 48px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.docs h3 {
+  margin-top: 32px;
+}
+.docs h1,
+.docs h2,
+.docs h3 {
+  position: relative;
+  scroll-margin-top: 16px;
+}
+.docs .anchor {
+  position: absolute;
+  left: -1em;
+  width: 1em;
+  opacity: 0;
+  text-decoration: none;
+  color: var(--muted);
+  font-weight: 400;
+}
+.docs h1 .anchor {
+  display: none;
+}
+.docs :is(h2, h3):hover .anchor {
+  opacity: 1;
+}
+.docs pre {
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  overflow-x: auto;
+  white-space: pre;
+}
+/* Box-drawing runs in code blocks, drawn over exactly --n character cells
+   (see drawBoxChars in vite-plugin-docs.ts). Strokes run through the middle
+   of the cells; corners sit at the outer edges of the first and last
+   characters, inset slightly to line up with the letters rather than the
+   space around them. */
+.docs .bx {
+  position: relative;
+  display: inline-block;
+  width: calc(var(--n) * 1ch);
+  height: 1lh;
+  vertical-align: top;
+  overflow: hidden;
+  color: transparent;
+}
+.docs .bx::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  border: 0 solid var(--fg);
+  border-bottom-width: max(1px, 0.08em);
+}
+.docs .bx-l::before {
+  left: 0.1ch;
+  border-left-width: max(1px, 0.08em);
+}
+.docs .bx-r::before {
+  right: 0.1ch;
+  border-right-width: max(1px, 0.08em);
+}
+.docs .table-wrap {
+  overflow-x: auto;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.docs table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 14.5px;
+}
+.docs th,
+.docs td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.docs tr:last-child td {
+  border-bottom: none;
+}
+.docs th {
+  background: var(--bg-3);
+  white-space: nowrap;
+}
+.docs blockquote {
+  margin: 16px 0;
+  padding: 8px 16px;
+  background: var(--accent-tint);
+  border: 1.5px solid var(--accent-edge);
+  border-radius: var(--radius);
+}
+.docs a {
+  color: var(--fg);
+  text-decoration-color: var(--muted);
+  text-underline-offset: 2px;
+  overflow-wrap: anywhere;
+}
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translate(-50%, 20px);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.2s;
+  z-index: 100;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+.docs td:first-child code {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+.anim-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 16px 0 24px;
+}
+.anim-tile {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  text-decoration: none;
+}
+.anim-tile:hover,
+.anim-tile:focus-visible {
+  border-color: var(--muted);
+}
+.anim-tile .thumb {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  pointer-events: none;
+}
+.anim-tile .thumb > .bw-stage {
+  position: absolute;
+  inset: 0;
+}
+.anim-tile .meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+}
+.anim-tile .play-hint {
+  display: none;
+  font-size: 12px;
+  color: var(--muted);
+}
+.anim-tile.still .play-hint {
+  display: inline;
+}
+
+.page-site :focus-visible {
+  outline: 2px solid var(--accent-edge);
+  outline-offset: 2px;
+}
+.page-site ::selection {
+  background: var(--accent);
+  color: var(--accent-fg);
+}

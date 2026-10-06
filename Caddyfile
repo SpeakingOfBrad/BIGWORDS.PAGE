@@ -1,0 +1,39 @@
+# img-src stays open because displays show images from any host. Inline styles
+# are needed for the runtime @font-face rules and style attributes. A snippet,
+# so 404 responses get these headers too.
+(security_headers) {
+	header {
+		Referrer-Policy no-referrer
+		X-Content-Type-Options nosniff
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; connect-src 'self'; img-src * data:; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+		-Server
+	}
+}
+
+:80 {
+	root * /usr/share/caddy
+	encode zstd gzip
+	import security_headers
+
+	# The viewer can be embedded anywhere (OBS, dashboards); the editor and
+	# docs can't. HSTS is left to the TLS-terminating reverse proxy.
+	@noframe path /editor /editor.html /docs /docs.html
+	header @noframe X-Frame-Options SAMEORIGIN
+	@immutable path /assets/* /fonts/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	# The app reads all state from the URL fragment, so / serves every
+	# display. /editor and /docs are their own files (editor.html,
+	# docs.html); anything else is a real 404.
+	redir /editor/ /editor 308
+	redir /docs/ /docs 308
+	try_files {path} {path}.html
+	file_server
+
+	handle_errors 404 {
+		import security_headers
+		rewrite * /404.html
+		file_server
+	}
+}

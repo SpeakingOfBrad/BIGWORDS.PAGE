@@ -1,0 +1,423 @@
+.page-editor {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.page-editor #app {
+  display: contents;
+}
+.editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+}
+.editor-preview {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px;
+  gap: 10px;
+  background: var(--bg-3);
+}
+.preview-frame {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+.preview-frame > .bw-stage {
+  position: absolute;
+  inset: 0;
+}
+.preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.url-field {
+  flex: 1 1 200px;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg);
+}
+.url-count {
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.url-count.warn {
+  color: var(--warn);
+}
+.url-count.over {
+  color: var(--danger);
+  font-weight: 600;
+}
+.editor-controls {
+  overflow-y: auto;
+  border-left: 1px solid var(--line);
+  background: var(--bg);
+  padding: 4px 0 40px;
+}
+.group {
+  border-bottom: 1px solid var(--line);
+  padding: 14px 18px;
+}
+.group > summary,
+.group > h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  font-weight: 700;
+  margin: 0 0 10px;
+  cursor: default;
+  list-style: none;
+}
+details.group > summary {
+  cursor: pointer;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+details.group > summary::-webkit-details-marker {
+  display: none;
+}
+details.group > summary::after {
+  content: '+';
+  font-size: 16px;
+  line-height: 1;
+}
+details.group[open] > summary {
+  margin-bottom: 10px;
+}
+details.group[open] > summary::after {
+  content: '−';
+}
+.group .dotset::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 7px;
+  vertical-align: 1px;
+  border-radius: 2px;
+  background: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent-edge);
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.row > label.lbl {
+  min-width: 82px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.page-editor input[type='text'],
+.page-editor input[type='url'],
+.page-editor input[type='number'],
+.page-editor input[type='datetime-local'],
+.page-editor select,
+.page-editor textarea {
+  font: inherit;
+  font-size: 14px;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  min-width: 0;
+}
+/* iOS Safari zooms the page into any field with text under 16px when it's
+   tapped, which left the editor zoomed in and shrank the preview. */
+@media (pointer: coarse) {
+  .page-editor input[type='text'],
+  .page-editor input[type='url'],
+  .page-editor input[type='number'],
+  .page-editor input[type='datetime-local'],
+  .page-editor select,
+  .page-editor textarea {
+    font-size: 16px;
+  }
+}
+.page-editor input:focus-visible,
+.page-editor select:focus-visible,
+.page-editor textarea:focus-visible,
+.page-editor button:focus-visible {
+  outline: 2px solid var(--accent-edge);
+  outline-offset: 1px;
+}
+.page-editor input:disabled,
+.page-editor select:disabled {
+  opacity: 0.45;
+}
+.page-editor textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+  font-family: var(--mono);
+  line-height: 1.45;
+}
+.page-editor input[type='number'] {
+  width: 84px;
+}
+.grow {
+  flex: 1 1 140px;
+}
+.page-editor input[type='color'] {
+  width: 38px;
+  height: 34px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-2);
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.advisory {
+  font-size: 13px;
+  color: var(--warn);
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+}
+.advisory[hidden],
+.hint[hidden] {
+  display: none;
+}
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 6px;
+}
+.font-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg);
+  cursor: pointer;
+  text-align: left;
+}
+.font-btn .sample {
+  font-size: 24px;
+  line-height: 1.1;
+}
+.font-btn .name {
+  font-size: 11.5px;
+  color: var(--muted);
+  font-family: var(--sans);
+}
+.font-btn[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent-edge);
+  color: var(--accent-fg);
+}
+.font-btn[aria-pressed='true'] .name {
+  color: var(--accent-fg);
+  opacity: 0.75;
+}
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg);
+  cursor: pointer;
+}
+.chip[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent-edge);
+  color: var(--accent-fg);
+}
+.slides {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.slides li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 4px 4px 10px;
+}
+.slides .n {
+  font-size: 12px;
+  color: var(--muted);
+  width: 1.5em;
+}
+.slides .txt {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13.5px;
+  font-family: var(--mono);
+  background: none;
+  border: 0;
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.icon-btn {
+  font: inherit;
+  font-size: 13px;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+.icon-btn:hover:not(:disabled) {
+  color: var(--fg);
+  border-color: var(--line);
+}
+.icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+.cheats {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 6px;
+}
+.cheats td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--line);
+}
+.cheats td:first-child {
+  font-family: var(--mono);
+  white-space: nowrap;
+}
+.mini-details > summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.pad-sides {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.pad-sides label {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  color: var(--muted);
+  gap: 2px;
+}
+.pad-sides input[type='number'] {
+  width: 100%;
+}
+
+@media (max-width: 860px) {
+  /* The pinned preview covers the top of the screen; tell the browser so it
+     scrolls focused fields below it rather than underneath. */
+  html:has(body.page-editor) {
+    scroll-padding-top: calc(var(--editor-pane-h, 46vh) + 12px);
+  }
+  /* While typing with the keyboard open: a shorter preview, without the URL
+     row, so the field fits below it. */
+  html.editor-typing:has(body.page-editor) {
+    scroll-padding-top: calc(var(--editor-pane-typing-h, 30vh) + 12px);
+  }
+  html.editor-typing .editor-preview {
+    height: var(--editor-pane-typing-h, 30vh);
+    align-items: center;
+  }
+  /* The full-size frame, scaled down as a whole: a true miniature that keeps
+     its proportions. The negative margin removes the space the unscaled frame
+     would still take up. */
+  html.editor-typing .preview-frame {
+    flex: none;
+    width: var(--editor-frame-w);
+    height: var(--editor-frame-h);
+    transform: scale(var(--editor-frame-scale, 1));
+    transform-origin: top center;
+    margin-bottom: calc(var(--editor-frame-h) * (var(--editor-frame-scale, 1) - 1));
+  }
+  html.editor-typing .preview-bar,
+  html.editor-typing .editor-preview > .advisory {
+    display: none;
+  }
+  .page-editor {
+    height: auto;
+    overflow: visible;
+  }
+  .editor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .editor-preview {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    /* Pixel height set once by the editor script (see lockPreviewHeight).
+       Viewport units, even svh, change in some mobile browsers when the
+       address bar collapses, which resized the preview and refit the text. */
+    height: var(--editor-pane-h, 46vh);
+    padding: 10px;
+  }
+  .editor-controls {
+    border-left: 0;
+    overflow: visible;
+  }
+}
+@media (max-width: 600px) {
+  /* On phones in portrait the URL gets its own row, so the buttons never
+     re-wrap as the character count grows, which would also change the
+     preview's height. Wider screens fit everything on one row. */
+  .url-field {
+    flex: 1 1 100%;
+  }
+  .url-count {
+    margin-right: auto;
+  }
+}

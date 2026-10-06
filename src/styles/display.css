@@ -1,0 +1,262 @@
+/* Display renderer — shared by viewer, editor preview and home demo. */
+/* Low specificity so the host element can choose its own positioning. */
+:where(.bw-stage) {
+  position: relative;
+}
+.bw-stage {
+  overflow: hidden;
+  contain: strict;
+}
+.bw-box {
+  position: absolute;
+  overflow: hidden;
+  --bw-dur: 1s;
+}
+.bw-editor .bw-box.bw-ratio {
+  outline: 2px dashed rgba(128, 128, 128, 0.85);
+  outline-offset: -2px;
+}
+.bw-img-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.bw-img-layer.bw-img-full {
+  object-fit: contain;
+}
+.bw-content {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+}
+.bw-area {
+  position: relative;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-height: 0;
+  /* Not clipped: glyphs that draw past their character boxes (script and
+     italic fonts) may spill into the padding instead of being cut off. The
+     display box still clips at its own edge. */
+  overflow: visible;
+}
+.bw-img-flow {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 45%;
+  object-fit: contain;
+}
+.bw-img-flow[hidden],
+.bw-img-layer[hidden] {
+  display: none;
+}
+
+/* One layer per slide, each filling the text area. */
+.bw-slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  overflow: visible;
+}
+/* Marquees still clip to the text area so moving text never crosses images
+   or QR codes above or below it. */
+.bw-slide.bw-mode-height,
+.bw-slide.bw-mode-width {
+  overflow: hidden;
+}
+.bw-slide[hidden] {
+  display: none;
+}
+.bw-slide.bw-locked {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.bw-block {
+  margin: auto;
+  text-align: center;
+  line-height: 1.15;
+  white-space: pre-wrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  font-kerning: normal;
+}
+.bw-locked .bw-block {
+  overflow-wrap: anywhere;
+}
+.bw-line {
+  min-height: 1.15em;
+}
+.bw-h1 {
+  font-size: 2em;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.bw-h2 {
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.bw-b {
+  font-weight: 700;
+}
+.bw-i {
+  font-style: italic;
+}
+.bw-s {
+  text-decoration: line-through;
+  text-decoration-thickness: 0.07em;
+}
+/* Inline code: monospace on a faint box tinted from the text color, so it
+   reads on any background. */
+.bw-code {
+  --bw-code-tint: color-mix(in srgb, currentColor 16%, transparent);
+  font-family: var(--bw-code-font, ui-monospace, monospace);
+  font-size: 0.9em;
+  padding: 0 0.2em;
+  border-radius: 0.15em;
+  background: var(--bw-code-tint);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+.bw-cd {
+  font-variant-numeric: tabular-nums;
+}
+.bw-hidden {
+  visibility: hidden;
+}
+/* Typewriter characters. Some fonts draw past their character box (Caveat's
+   slanted strokes overhang it by up to 0.19em), and Safari only repaints the
+   box when a character is hidden, leaving slivers behind. An invisible shadow
+   ring extends the repainted area without affecting layout or text fitting. */
+.bw-ch {
+  box-shadow: 0 0 0 0.3em rgb(0 0 0 / 0.001);
+}
+/* Typewriter code spans: the box is painted by each visible character instead
+   of the span, so it only covers what has been typed. The tint is opaque here
+   so neighbouring characters don't leave seams where their boxes meet. The
+   first and last visible characters extend over the span's padding with a
+   shadow and carry the rounded corners. */
+.bw-tw .bw-code {
+  --bw-code-tint: color-mix(in srgb, currentColor 16%, var(--bw-bg, transparent));
+  background: none;
+}
+.bw-tw .bw-code .bw-ch {
+  background: var(--bw-code-tint);
+}
+.bw-tw .bw-code .bw-ch.bw-code-start {
+  border-radius: 0.15em 0 0 0.15em;
+  box-shadow: 0 0 0 0.3em rgb(0 0 0 / 0.001), -0.2em 0 0 0 var(--bw-code-tint);
+}
+.bw-tw .bw-code .bw-ch.bw-code-end {
+  border-radius: 0 0.15em 0.15em 0;
+  box-shadow: 0 0 0 0.3em rgb(0 0 0 / 0.001), 0.2em 0 0 0 var(--bw-code-tint);
+}
+.bw-tw .bw-code .bw-ch.bw-code-start.bw-code-end {
+  border-radius: 0.15em;
+  box-shadow: 0 0 0 0.3em rgb(0 0 0 / 0.001), -0.2em 0 0 0 var(--bw-code-tint), 0.2em 0 0 0 var(--bw-code-tint);
+}
+/* Typewriter block: the same invisible ring, plus a background that flips
+   between two invisible values on every step to force a full repaint. */
+.bw-tw {
+  box-shadow: 0 0 0 0.3em rgb(0 0 0 / 0.001);
+  background-color: rgb(0 0 0 / 0);
+}
+.bw-tw.bw-tw-flip {
+  background-color: rgb(0 0 0 / 0.004);
+}
+
+/* Marquee modes: scroll (right to left) and crawl (bottom to top). */
+.bw-mode-height {
+  align-items: center;
+}
+.bw-mode-height .bw-block {
+  margin: 0;
+  flex-shrink: 0;
+  white-space: pre;
+  will-change: transform;
+}
+.bw-mode-width .bw-block {
+  margin: 0 auto;
+  align-self: flex-start;
+  will-change: transform;
+}
+
+/* QR code */
+.bw-qr {
+  line-height: 0;
+  width: var(--bw-qr, 120px);
+  height: var(--bw-qr, 120px);
+  flex: 0 0 auto;
+}
+.bw-qr svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.bw-qr-tl,
+.bw-qr-tr,
+.bw-qr-bl,
+.bw-qr-br {
+  position: absolute;
+  z-index: 2;
+}
+.bw-qr-tl { top: var(--bw-qr-m); left: var(--bw-qr-m); }
+.bw-qr-tr { top: var(--bw-qr-m); right: var(--bw-qr-m); }
+.bw-qr-bl { bottom: var(--bw-qr-m); left: var(--bw-qr-m); }
+.bw-qr-br { bottom: var(--bw-qr-m); right: var(--bw-qr-m); }
+.bw-qr-below {
+  margin-top: var(--bw-qr-m);
+}
+
+/* Animations */
+.bw-anim-pulse { animation: bw-pulse var(--bw-dur) ease-in-out infinite; }
+.bw-anim-flash { animation: bw-flash var(--bw-dur) step-end infinite; }
+.bw-anim-shake { animation: bw-shake var(--bw-dur) linear infinite; }
+.bw-anim-bounce { animation: bw-bounce var(--bw-dur) ease-in-out infinite; }
+.bw-anim-fadein { animation: bw-fadein var(--bw-dur) ease-out both; }
+.bw-anim-rainbow { animation: bw-rainbow var(--bw-dur) linear infinite; }
+.bw-anim-scroll { animation: bw-marquee-x var(--bw-dur) linear infinite; }
+.bw-anim-crawl { animation: bw-marquee-y var(--bw-dur) linear infinite; }
+
+@keyframes bw-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+@keyframes bw-flash {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes bw-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-1.5%); }
+  75% { transform: translateX(1.5%); }
+}
+@keyframes bw-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3%); }
+}
+@keyframes bw-fadein {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes bw-rainbow {
+  0%, 100% { color: hsl(0 100% var(--bw-rb-l)); }
+  16.7% { color: hsl(60 100% var(--bw-rb-l)); }
+  33.3% { color: hsl(120 100% var(--bw-rb-l)); }
+  50% { color: hsl(180 100% var(--bw-rb-l)); }
+  66.7% { color: hsl(240 100% var(--bw-rb-l)); }
+  83.3% { color: hsl(300 100% var(--bw-rb-l)); }
+}
+@keyframes bw-marquee-x {
+  from { transform: translateX(var(--bw-from)); }
+  to { transform: translateX(var(--bw-to)); }
+}
+@keyframes bw-marquee-y {
+  from { transform: translateY(var(--bw-from)); }
+  to { transform: translateY(var(--bw-to)); }
+}

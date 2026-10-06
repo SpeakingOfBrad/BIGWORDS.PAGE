@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Exercises the canonical URLs, social cards and sitemap, which are only
+    # built when SITE_URL is set. The smoke test reads it too.
+    env:
+      SITE_URL: https://example.com
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      # Includes the typecheck.
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Start preview server
+        run: |
+          npm run preview -- --port 4173 --strictPort &
+          for i in $(seq 1 30); do curl -sf http://localhost:4173 >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - run: npm run smoke
+      # Pixel comparisons can differ with the runner's fonts and GPU, so a
+      # failure here is reported without failing the build.
+      - run: npm run clipcheck
+        continue-on-error: true

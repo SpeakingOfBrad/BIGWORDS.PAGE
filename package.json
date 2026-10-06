@@ -1,0 +1,39 @@
+{
+  "name": "bigwords-page",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "fonts": "node scripts/copy-fonts.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "clipcheck": "node scripts/clipcheck.mjs",
+    "og": "node scripts/og-image.mjs"
+  },
+  "dependencies": {
+    "qrcode-generator": "^2.0.4"
+  },
+  "devDependencies": {
+    "@fontsource/bebas-neue": "^5.3.0",
+    "@fontsource/caveat": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/montserrat": "^5.3.0",
+    "@fontsource/roboto-slab": "^5.3.0",
+    "@types/node": "^26.6.4",
+    "jsdom": "^30.1.1",
+    "marked": "^18.0.14",
+    "playwright": "^1.63.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.2",
+    "vitest": "^5.0.3"
+  }
+}

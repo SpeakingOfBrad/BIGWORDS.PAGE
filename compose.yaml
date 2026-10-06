@@ -1,0 +1,23 @@
+services:
+  bigwords:
+    build:
+      context: .
+      # Optional build settings (see the README).
+      # args:
+      #   SITE_URL: https://signs.example.com
+      #   NOINDEX: "1"
+      #   OPERATOR_DOCS: operator.md
+    image: bigwords-page
+    restart: unless-stopped
+    # No ports are published. Your reverse proxy reaches the container on
+    # port 80 over the shared network and terminates TLS.
+    # ports:
+    #   - "80:80"
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    # Set this to your reverse proxy's existing network, e.g.
+    # external: true
+    # name: proxy

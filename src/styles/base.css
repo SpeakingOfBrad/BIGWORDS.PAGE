@@ -1,0 +1,21 @@
+[hidden] {
+  display: none !important;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+body.page-viewer {
+  background: #000;
+  overflow: hidden;
+}
+.viewer-stage {
+  position: fixed;
+  inset: 0;
+}

@@ -1,0 +1,242 @@
+{
+  "1": {
+    "family": "Inter",
+    "slug": "inter",
+    "faces": [
+      {
+        "file": "inter/5.3.0/inter-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-ext-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-ext-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "inter/5.3.0/inter-latin-ext-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  },
+  "2": {
+    "family": "Montserrat",
+    "slug": "montserrat",
+    "faces": [
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-ext-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-ext-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "montserrat/5.3.0/montserrat-latin-ext-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  },
+  "3": {
+    "family": "Roboto Slab",
+    "slug": "roboto-slab",
+    "faces": [
+      {
+        "file": "roboto-slab/5.3.0/roboto-slab-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "roboto-slab/5.3.0/roboto-slab-latin-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "roboto-slab/5.3.0/roboto-slab-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "roboto-slab/5.3.0/roboto-slab-latin-ext-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  },
+  "4": {
+    "family": "Bebas Neue",
+    "slug": "bebas-neue",
+    "faces": [
+      {
+        "file": "bebas-neue/5.3.0/bebas-neue-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "bebas-neue/5.3.0/bebas-neue-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  },
+  "5": {
+    "family": "JetBrains Mono",
+    "slug": "jetbrains-mono",
+    "faces": [
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-ext-400-italic.woff2",
+        "weight": 400,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-ext-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "jetbrains-mono/5.3.0/jetbrains-mono-latin-ext-700-italic.woff2",
+        "weight": 700,
+        "style": "italic",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  },
+  "6": {
+    "family": "Caveat",
+    "slug": "caveat",
+    "faces": [
+      {
+        "file": "caveat/5.3.0/caveat-latin-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "caveat/5.3.0/caveat-latin-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD"
+      },
+      {
+        "file": "caveat/5.3.0/caveat-latin-ext-400-normal.woff2",
+        "weight": 400,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      },
+      {
+        "file": "caveat/5.3.0/caveat-latin-ext-700-normal.woff2",
+        "weight": 700,
+        "style": "normal",
+        "range": "U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF"
+      }
+    ]
+  }
+}
