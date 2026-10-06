@@ -289,7 +289,7 @@ The message and settings live only in the URL fragment, which browsers do not se
 
 ## Self-hosting
 
-The build is a folder of static files. Any static host works if it serves `index.html` for `/`, `editor.html` for `/editor`, `docs.html` for `/docs`, and `404.html` with status 404 for any other path. Set `SITE_URL` to your own origin when building (for example `SITE_URL=https://signs.example.com npm run build`) to add canonical URLs, social cards and a sitemap. A Docker image based on Caddy is included in the repository:
+The build is a folder of static files. Any static host works if it serves `index.html` for `/`, `editor.html` for `/editor`, `docs.html` for `/docs`, and `404.html` with status 404 for any other path. Set `SITE_URL` to your own origin when building (for example `SITE_URL=https://signs.example.com npm run build`) to add canonical URLs, social cards and a sitemap. A Docker image based on Caddy is included in the [repository](https://github.com/SpeakingOfBrad/BIGWORDS.PAGE):
 
 ```
 docker compose up -d --build

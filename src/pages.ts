@@ -4,6 +4,9 @@
 
 export const SITE_NAME = 'BIGWORDS.PAGE';
 
+/** The project's source code, linked from the home page footer. */
+export const SOURCE_URL = 'https://github.com/SpeakingOfBrad/BIGWORDS.PAGE';
+
 export interface PageMeta {
   path: string;
   title: string;

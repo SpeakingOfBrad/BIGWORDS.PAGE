@@ -49,6 +49,8 @@ The build is a folder of static files, so any static host works if it serves `in
 The image is the official `caddy` image serving the build from `/usr/share/caddy`, with a Caddyfile that listens on `:80`, sets the security headers and serves `404.html` for unknown paths.
 
 ```sh
+git clone https://github.com/SpeakingOfBrad/BIGWORDS.PAGE.git
+cd BIGWORDS.PAGE
 docker compose up -d --build
 ```
 

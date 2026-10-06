@@ -1,6 +1,7 @@
 import { h, previewDisplay, siteHeader } from './chrome';
 import type { Display } from './render/display';
 import { ensureFont } from './render/fonts';
+import { SOURCE_URL } from './pages';
 import { parseFragment } from './state/fragment';
 import { resolveSettings } from './state/params';
 
@@ -99,8 +100,8 @@ export function mountHome(app: HTMLElement): { destroy(): void } {
     h(
       'footer',
       { class: 'site-footer' },
-      h('p', {}, 'BIGWORDS.PAGE is open source under the MIT license. Fonts are bundled under their own open licenses.'),
-      h('p', {}, h('a', { href: '/docs' }, 'Docs'), ' · ', h('a', { href: '/editor' }, 'Editor')),
+      h('p', {}, 'BIGWORDS.PAGE is ', h('a', { href: SOURCE_URL }, 'open source'), ' under the MIT license. Fonts are bundled under their own open licenses.'),
+      h('p', {}, h('a', { href: '/docs' }, 'Docs'), ' · ', h('a', { href: '/editor' }, 'Editor'), ' · ', h('a', { href: SOURCE_URL }, 'GitHub')),
     ),
   );
 
