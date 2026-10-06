@@ -228,7 +228,7 @@ Set `until` to an ISO 8601 date and time, then put `{countdown}` in the message.
 | `label` (default) | `2d 14h 06m 32s` |
 | `colon` | `02:14:06:32` |
 
-Leading units are never dropped: three hours shows as `0d 03h 00m 00s`.
+With `label`, units are dropped from the front once they reach zero: three hours shows as `3h 00m 00s`, then `59m 59s`, then `59s`. Zeros after the first unit stay, so the countdown doesn't jump around as it ticks. `colon` always shows all four units.
 
 | `zero` | One slide | Several slides |
 |---|---|---|

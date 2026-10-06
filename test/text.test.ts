@@ -52,7 +52,11 @@ describe('countdown format', () => {
   const ms = ((2 * 24 + 14) * 3600 + 6 * 60 + 32) * 1000;
   it('label', () => {
     expect(formatCountdown(ms, 'label')).toBe('2d 14h 06m 32s');
-    expect(formatCountdown((3 * 3600 + 12 * 60 + 5) * 1000, 'label')).toBe('0d 03h 12m 05s');
+    expect(formatCountdown(24 * 3600 * 1000, 'label')).toBe('1d 00h 00m 00s');
+    expect(formatCountdown((3 * 3600 + 12 * 60 + 5) * 1000, 'label')).toBe('3h 12m 05s');
+    expect(formatCountdown((12 * 60 + 48) * 1000, 'label')).toBe('12m 48s');
+    expect(formatCountdown(7000, 'label')).toBe('7s');
+    expect(formatCountdown(-5000, 'label')).toBe('0s');
   });
   it('colon', () => {
     expect(formatCountdown(ms, 'colon')).toBe('02:14:06:32');
