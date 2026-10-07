@@ -1,49 +1,29 @@
 # BIGWORDS.PAGE
 
-Show a message as big as the screen allows. The URL is the whole display: no accounts, no login, no backend.
+Full-screen text for any screen. Type a message in the editor and it fills the screen, as big as it fits. The whole display lives in the URL, so there's no backend, no accounts and nothing stored on a server.
 
 <picture>
   <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/demo-poster.png">
   <img src="docs/media/demo.gif" width="600" alt="Three example displays: a handwritten &quot;Welcome home, Grandma!&quot; sign, a quiz countdown timer, and a café Wi-Fi password with a QR code.">
 </picture>
 
-```
-https://your-domain/#Hello%20World&bg=000000&fg=ffd60a&font=4&anim=pulse
-```
+## Using it
 
-- **Viewer** `/#…`: fullscreen render, no UI.
-- **Editor** `/editor#…`: live preview and controls. The address bar always mirrors the state, **Copy URL** copies the viewer link, and the QR button shows it as a code to scan.
-- **Docs** `/docs`: the full reference, built from [`docs/REFERENCE.md`](docs/REFERENCE.md).
+- **Editor** `/editor`: write the message and set colors, fonts, slides, countdowns, animations and QR codes with a live preview. **Copy URL** copies the display link, and the QR button shows it as a code, so you can open it on a phone, tablet or TV by scanning.
+- **Viewer** `/#…`: the display itself, fullscreen, with no controls. This is the link you share, bookmark or open on the screen.
+- **Docs** `/docs`: the reference, built from [`docs/REFERENCE.md`](docs/REFERENCE.md). All of the URL parameters are documented, so generating links is easy.
 
-Everything lives in the URL fragment, which browsers never send to the server. Features: auto-fit sizing, a small markdown subset with relative headings, slides (`||`), countdowns (`{countdown}` with `until` for a date and time or `timer` for a length of time), animations, bundled open-source fonts, aspect-ratio framing, client-side QR codes (links, Wi-Fi, calls, texts, email, locations) and embedded images. See the **[reference](docs/REFERENCE.md)** for every parameter.
+Features:
 
-## Development
+- Text fits itself to any screen size and orientation
+- A small Markdown subset: bold, italic, headings, line breaks
+- Slides, split with `||`
+- Countdowns to a date and time (`until`) or for a length of time (`timer`)
+- Animations, bundled open-source fonts and aspect-ratio framing
+- QR codes drawn in the browser: links, Wi-Fi, calls, texts, email, locations
+- Images, and keeping the screen awake while a display is open
 
-Requires Node 22.12+. CI and the Docker build use the LTS release in [`.node-version`](.node-version), currently 24.
-
-```sh
-npm install
-npm run dev        # dev server
-npm test           # unit tests (Vitest)
-npm run typecheck
-npm run build      # static output in dist/
-npm run preview    # serve dist/ on :4173
-npm run smoke      # browser smoke test against the preview server (Playwright)
-npm run clipcheck  # checks that no glyph ink is clipped at the text area edges
-```
-
-GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the unit tests, build and smoke test on every push to `main` and every pull request. Clipcheck runs too, but its result doesn't fail the build.
-
-Project layout:
-
-| Path | Purpose |
-|---|---|
-| `src/state/` | Fragment parsing/serialization, parameter validation and defaults |
-| `src/render/text.ts` | Message pipeline: escapes → slides → markdown → `{countdown}` |
-| `src/render/display.ts` | The renderer shared by the viewer, editor preview and home page |
-| `src/editor/` | Editor UI |
-| `docs/REFERENCE.md` | Documentation source, rendered into `/docs` at build time |
-| `public/fonts/` | Vendored fonts with their licenses (`npm run fonts` regenerates them) |
+The display lives in the URL fragment (after the `#`), which browsers never send to the server.
 
 ## Self-hosting
 
@@ -94,6 +74,34 @@ All optional. Set them as environment variables for `npm run build`, or as build
 The build writes one HTML file per page (`index.html`, `editor.html`, `docs.html`), each with its own title, description and Open Graph tags. Page titles and descriptions live in [`src/pages.ts`](src/pages.ts), which the runtime also uses for the tab title. `index.html` and `docs.html` contain the prerendered home page and reference, so they read without JavaScript. `index.html` also serves every display (`/#…`), so a small inline script in its `<head>` hides the home page when the URL has a fragment, before anything is drawn; its hash is in the Caddyfile's CSP, and a unit test checks that they match. The build also writes `robots.txt` and a `noindex` `404.html` that hosts serve with status 404 for unknown paths, so typos and stale links aren't indexed as copies of the home page. `npm run preview` does the same.
 
 The social card `public/og.png` and `public/apple-touch-icon.png` are rendered with the real viewer by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts or the favicon.
+
+## Development
+
+Requires Node 22.12+. CI and the Docker build use the LTS release in [`.node-version`](.node-version), currently 24.
+
+```sh
+npm install
+npm run dev        # dev server
+npm test           # unit tests (Vitest)
+npm run typecheck
+npm run build      # static output in dist/
+npm run preview    # serve dist/ on :4173
+npm run smoke      # browser smoke test against the preview server (Playwright)
+npm run clipcheck  # checks that no glyph ink is clipped at the text area edges
+```
+
+GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the unit tests, build and smoke test on every push to `main` and every pull request. Clipcheck runs too, but its result doesn't fail the build.
+
+Project layout:
+
+| Path | Purpose |
+|---|---|
+| `src/state/` | Fragment parsing/serialization, parameter validation and defaults |
+| `src/render/text.ts` | Message pipeline: escapes → slides → markdown → `{countdown}` |
+| `src/render/display.ts` | The renderer shared by the viewer, editor preview and home page |
+| `src/editor/` | Editor UI |
+| `docs/REFERENCE.md` | Documentation source, rendered into `/docs` at build time |
+| `public/fonts/` | Vendored fonts with their licenses (`npm run fonts` regenerates them) |
 
 ## License
 

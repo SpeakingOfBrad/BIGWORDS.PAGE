@@ -70,10 +70,10 @@ export function homeMarkup(origin: string): string {
   return (
     '<main class="home">' +
     '<section class="hero"><div><h1>Big words for any screen</h1>' +
-    '<p class="lede">Make a full-screen sign, timer or message from a link. Hold up your phone at arrivals, put a countdown on the TV, or show the Wi-Fi password at the front desk. No account, no app, nothing stored on a server. The link is the whole display, so you can share it, bookmark it, or type it by hand.</p>' +
+    '<p class="lede">Make a full-screen sign, timer or message from a link. Hold up your phone at arrivals, put a countdown on the TV, or show the Wi-Fi password at the front desk. No account, no app, nothing stored on a server. The link is the whole display, so you can share it or bookmark it.</p>' +
     `<div class="hero-actions"><a class="btn btn-primary" href="/editor">Open the editor</a><a class="btn" href="/docs">Read the docs</a><a class="btn" href="${href('/', HERO)}">View fullscreen</a></div></div>` +
     `<div class="demo"><div class="demo-frame"><div></div></div><div class="demo-url"><a href="${href('/', HERO)}">${url(HERO)}</a></div></div></section>` +
-    '<section class="section"><h2>Make one by hand</h2><p>Use the editor if you like, but you never need it. Every display is just a URL.</p><ol class="steps">' +
+    '<section class="section"><h2>Make one by hand</h2><p>Using the built-in editor is easiest, but generate a link however you like.</p><ol class="steps">' +
     STEPS.map(([text, frag]) => `<li><div><p>${esc(text)}</p><a class="url" href="${href('/', frag)}">${url(frag)}</a></div></li>`).join('') +
     '</ol></section>' +
     `<section class="section"><h2>Use cases</h2><p>Every card is a working link. Open it fullscreen, or load it into the editor and make it yours.</p><div class="examples">${shown}</div>` +

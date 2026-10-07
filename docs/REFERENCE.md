@@ -2,7 +2,7 @@
 
 BIGWORDS.PAGE shows a message as large as the screen allows. Everything about the display lives in the URL, so a link *is* the display. There are no accounts and no backend, and nothing is stored anywhere.
 
-You can build every display by typing a URL by hand. The [editor]({origin}/editor) only makes that easier.
+The [editor]({origin}/editor) is the easiest way to make a display. All of the URL parameters are documented here, so generating links is easy too.
 
 > **Try it:** [{origin}/#Hello%20World]({origin}/#Hello%20World)
 
@@ -60,7 +60,7 @@ Use standard percent-encoding.
 | `{` `}` | `%7B` `%7D` | Optional |
 | `\` | `%5C` | Optional |
 
-When typing by hand you only strictly need to encode spaces, new lines, `&` and `%`. The editor always produces fully encoded URLs.
+When building a URL yourself, you only strictly need to encode spaces, new lines, `&` and `%`. The editor always produces fully encoded URLs.
 
 ## Parameters
 
@@ -285,7 +285,7 @@ The editor counts the URL's characters and warns as it nears about 2,000. Some m
 | [Location](#location) | `geo:` | Opens a maps app (Android) |
 | [Plain text](#plain-text) | Anything else | Shows the text |
 
-The editor's **QR code** section has a form for each type and writes the URL for you. Writing one by hand, follow the usual [encoding](#encoding) inside the `qr` value too: spaces are `%20` and `&` is `%26`.
+The editor's **QR code** section has a form for each type and writes the URL for you. Building one yourself, follow the usual [encoding](#encoding) inside the `qr` value too: spaces are `%20` and `&` is `%26`.
 
 ### Placement and size
 
