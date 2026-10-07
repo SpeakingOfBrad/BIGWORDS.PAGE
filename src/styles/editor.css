@@ -341,6 +341,9 @@ details.group[open] > summary::after {
   margin: 8px 0 0;
   padding: 0;
   display: grid;
+  /* An auto column grows to fit a long slide's unwrapped text, which widened
+     the whole editor. Pin it to the list's width so the text truncates. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 4px;
 }
 .slides li {
@@ -352,13 +355,19 @@ details.group[open] > summary::after {
   border-radius: 8px;
   padding: 4px 4px 4px 10px;
 }
+.slides .n,
+.slides .icon-btn {
+  flex: none;
+}
 .slides .n {
   font-size: 12px;
   color: var(--muted);
   width: 1.5em;
 }
 .slides .txt {
-  flex: 1 1 auto;
+  /* A zero basis, so a long slide's text takes only the space left over
+     and doesn't squeeze the number and buttons beside it. */
+  flex: 1 1 0;
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
