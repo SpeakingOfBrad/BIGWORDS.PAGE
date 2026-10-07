@@ -80,13 +80,9 @@
   margin: auto;
   text-align: center;
   line-height: 1.15;
-  white-space: pre-wrap;
-  overflow-wrap: normal;
-  word-break: normal;
+  /* Only the message's own line breaks: text never wraps. */
+  white-space: pre;
   font-kerning: normal;
-}
-.bw-locked .bw-block {
-  overflow-wrap: anywhere;
 }
 .bw-line {
   min-height: 1.15em;
@@ -177,7 +173,6 @@
 .bw-mode-height .bw-block {
   margin: 0;
   flex-shrink: 0;
-  white-space: pre;
   will-change: transform;
 }
 .bw-mode-width .bw-block {

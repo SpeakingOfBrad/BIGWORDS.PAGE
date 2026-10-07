@@ -21,6 +21,14 @@ describe('fragment', () => {
     expect(parseFragment('#100%25').message).toBe('100%');
   });
 
+  it('encodes trailing punctuation so linkifiers keep it in the link', () => {
+    const f = serializeFragment({ message: 'Hello, **world**!', params: {} }, []);
+    expect(f).toBe('Hello,%20**world%2A%2A%21');
+    expect(serializeFragment({ message: 'Wait...', params: {} }, [])).toBe('Wait%2E%2E%2E');
+    expect(serializeFragment({ message: 'Hi!', params: { size: '3' } }, ['size'])).toBe('Hi!&size=3');
+    expect(parseFragment(f).message).toBe('Hello, **world**!');
+  });
+
   it('handles a fragment with no message', () => {
     const s = parseFragment('#&bg=ff0000');
     expect(s.message).toBe('');

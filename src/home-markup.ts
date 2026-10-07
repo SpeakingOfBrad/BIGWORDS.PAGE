@@ -20,9 +20,9 @@ export interface Example {
  * `more` sit behind a "More use cases" button. Every card is a working link.
  */
 export const examples = (): Example[] => [
-  { title: 'Arrivals sign', fragment: '**WELCOME%20HOME,%20GRANDMA!**&bg=f9d5e5&fg=4a2c40&font=6&anim=pulse' },
-  { title: 'Quiz timer', fragment: 'Quiz%20timer:%0A%7Bcountdown%7D&bg=000000&fg=ffffff&font=3&timer=15m&zero=Pencils%20down' },
-  { title: 'Café Wi-Fi', fragment: 'Wi-Fi:%20**Cafe%20Guest**%0APassword:%20**latte;art**%7C%7CWelcome!&fg=f3e5d0&font=2&qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;&interval=4&img=data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxOTIgMTA4Jz48ZGVmcz48ZyBpZD0nYic+PGVsbGlwc2Ugcng9JzUnIHJ5PSczLjQnLz48ZWxsaXBzZSByeD0nNScgcnk9JzMuNCcgZmlsbD0ndXJsKCNzKScvPjxwYXRoIGQ9J00tNCwwQy0xLjUtLjksMS41LjksNCwwJyBzdHJva2U9JyMxNDBjMDgnIHN0cm9rZS13aWR0aD0nLjUnIGZpbGw9J25vbmUnLz48L2c+PHJhZGlhbEdyYWRpZW50IGlkPSdzJyBjeD0nLjM1JyBjeT0nLjMnPjxzdG9wIHN0b3AtY29sb3I9JyM4YTVhM2MnIHN0b3Atb3BhY2l0eT0nLjUnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3Atb3BhY2l0eT0nLjMnLz48L3JhZGlhbEdyYWRpZW50PjxwYXR0ZXJuIGlkPSdwJyB3aWR0aD0nMzgnIGhlaWdodD0nMzQnIHBhdHRlcm5Vbml0cz0ndXNlclNwYWNlT25Vc2UnIHBhdHRlcm5UcmFuc2Zvcm09J3JvdGF0ZSgxNyknPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDcsNylyb3RhdGUoMzApJyBmaWxsPScjNGEyZjIwJy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoMjAsNilyb3RhdGUoLTUwKXNjYWxlKDEuMDUpJyBmaWxsPScjNTYzODI2Jy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoMzIsOSlyb3RhdGUoNzUpc2NhbGUoMC45KScgZmlsbD0nIzNmMjgxYicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDEyLDE4KXJvdGF0ZSg5NSlzY2FsZSgwLjk1KScgZmlsbD0nIzVlM2QyOCcvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDI2LDE5KXJvdGF0ZSgxNjApJyBmaWxsPScjNGEyZjIwJy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoNywyOClyb3RhdGUoLTIwKScgZmlsbD0nIzU2MzgyNicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDE5LDI5KXJvdGF0ZSg0MClzY2FsZSgwLjk1KScgZmlsbD0nIzNmMjgxYicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDMxLDI4KXJvdGF0ZSgxMjApc2NhbGUoMS4wNSknIGZpbGw9JyM1ZTNkMjgnLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPScxOTInIGhlaWdodD0nMTA4JyBmaWxsPScjMWExMTBjJy8+PHJlY3Qgd2lkdGg9JzE5MicgaGVpZ2h0PScxMDgnIGZpbGw9J3VybCgjcCknLz48L3N2Zz4=' },
+  { title: 'Arrivals sign', fragment: '**WELCOME%20HOME,%0AGRANDMA!**&bg=f9d5e5&fg=4a2c40&font=6&anim=pulse' },
+  { title: 'Quiz timer', fragment: 'Quiz%20timer:%0A%7Bcountdown%7D&bg=000000&fg=ffffff&font=3&timer=30s&zero=**Pencils%0Adown%21%2A%2A' },
+  { title: 'Café Wi-Fi', fragment: 'Wi-Fi:%20**Cafe%20Guest**%0APassword:%0A**latte;art**%7C%7CWelcome!&fg=f3e5d0&font=2&qr=WIFI:T:WPA;S:Cafe%20Guest;P:latte%5C;art;;&interval=4&img=data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxOTIgMTA4Jz48ZGVmcz48ZyBpZD0nYic+PGVsbGlwc2Ugcng9JzUnIHJ5PSczLjQnLz48ZWxsaXBzZSByeD0nNScgcnk9JzMuNCcgZmlsbD0ndXJsKCNzKScvPjxwYXRoIGQ9J00tNCwwQy0xLjUtLjksMS41LjksNCwwJyBzdHJva2U9JyMxNDBjMDgnIHN0cm9rZS13aWR0aD0nLjUnIGZpbGw9J25vbmUnLz48L2c+PHJhZGlhbEdyYWRpZW50IGlkPSdzJyBjeD0nLjM1JyBjeT0nLjMnPjxzdG9wIHN0b3AtY29sb3I9JyM4YTVhM2MnIHN0b3Atb3BhY2l0eT0nLjUnLz48c3RvcCBvZmZzZXQ9JzEnIHN0b3Atb3BhY2l0eT0nLjMnLz48L3JhZGlhbEdyYWRpZW50PjxwYXR0ZXJuIGlkPSdwJyB3aWR0aD0nMzgnIGhlaWdodD0nMzQnIHBhdHRlcm5Vbml0cz0ndXNlclNwYWNlT25Vc2UnIHBhdHRlcm5UcmFuc2Zvcm09J3JvdGF0ZSgxNyknPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDcsNylyb3RhdGUoMzApJyBmaWxsPScjNGEyZjIwJy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoMjAsNilyb3RhdGUoLTUwKXNjYWxlKDEuMDUpJyBmaWxsPScjNTYzODI2Jy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoMzIsOSlyb3RhdGUoNzUpc2NhbGUoMC45KScgZmlsbD0nIzNmMjgxYicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDEyLDE4KXJvdGF0ZSg5NSlzY2FsZSgwLjk1KScgZmlsbD0nIzVlM2QyOCcvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDI2LDE5KXJvdGF0ZSgxNjApJyBmaWxsPScjNGEyZjIwJy8+PHVzZSBocmVmPScjYicgdHJhbnNmb3JtPSd0cmFuc2xhdGUoNywyOClyb3RhdGUoLTIwKScgZmlsbD0nIzU2MzgyNicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDE5LDI5KXJvdGF0ZSg0MClzY2FsZSgwLjk1KScgZmlsbD0nIzNmMjgxYicvPjx1c2UgaHJlZj0nI2InIHRyYW5zZm9ybT0ndHJhbnNsYXRlKDMxLDI4KXJvdGF0ZSgxMjApc2NhbGUoMS4wNSknIGZpbGw9JyM1ZTNkMjgnLz48L3BhdHRlcm4+PC9kZWZzPjxyZWN0IHdpZHRoPScxOTInIGhlaWdodD0nMTA4JyBmaWxsPScjMWExMTBjJy8+PHJlY3Qgd2lkdGg9JzE5MicgaGVpZ2h0PScxMDgnIGZpbGw9J3VybCgjcCknLz48L3N2Zz4=' },
   { title: 'New Year countdown', fragment: `Happy%20New%20Year%20in%0A{countdown}&until=${nextNewYear()}&font=5&cdfmt=colon&zero=Happy%20New%20Year!` },
   { title: 'On air', fragment: 'ON%20AIR&bg=b00020&fg=ffffff&font=4&anim=pulse' },
   { title: 'Gate or room sign', fragment: '%23%20Gate%2012%0ABoarding%20now&bg=0b3d91&fg=ffffff&font=2' },
@@ -35,7 +35,7 @@ export const examples = (): Example[] => [
 ];
 
 const STEPS: [string, string][] = [
-  ['Type a message after the #. Spaces are %20.', 'Hello%20World'],
+  ['Type a message after the #.', 'Hello%20World'],
   ['Add settings with &key=value.', 'Hello%20World&bg=000000&fg=ffd60a&font=4'],
   ['%0A starts a new line. # makes a heading (write it as %23).', '%23%20Room%20204%0AMeeting%20in%20progress'],
   ['|| splits the message into slides.', 'Coffee%20%E2%98%95||Tea%20%F0%9F%8D%B5||Water%20%F0%9F%92%A7&interval=2'],
@@ -60,6 +60,16 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 export function homeMarkup(origin: string): string {
   const url = (fragment: string) => esc(`${origin}/#${fragment}`);
   const href = (path: string, fragment: string) => esc(`${path}#${fragment}`);
+  // A step's URL as you'd type it: spaces and emoji as themselves, while the
+  // escapes you still have to type (new line, #, & and %) stay encoded.
+  const typed = (fragment: string) =>
+    esc(`${origin}/#${fragment.replace(/(?:%[0-9a-f]{2})+/gi, (run) => {
+      try {
+        return decodeURIComponent(run).replace(/[\n#&%]/g, encodeURIComponent);
+      } catch {
+        return run;
+      }
+    })}`);
   const card = (ex: Example) =>
     `<div class="example"><a href="${href('/', ex.fragment)}" style="text-decoration:none" aria-label="Open example: ${esc(ex.title)}">` +
     `<div class="thumb"><div></div></div><div class="meta"><strong>${esc(ex.title)}</strong><code>${url(ex.fragment)}</code></div></a>` +
@@ -74,7 +84,7 @@ export function homeMarkup(origin: string): string {
     `<div class="hero-actions"><a class="btn btn-primary" href="/editor">Open the editor</a><a class="btn" href="/docs">Read the docs</a><a class="btn" href="${href('/', HERO)}">View fullscreen</a></div></div>` +
     `<div class="demo"><div class="demo-frame"><div></div></div><div class="demo-url"><a href="${href('/', HERO)}">${url(HERO)}</a></div></div></section>` +
     '<section class="section"><h2>Make one by hand</h2><p>Using the built-in editor is easiest, but generate a link however you like.</p><ol class="steps">' +
-    STEPS.map(([text, frag]) => `<li><div><p>${esc(text)}</p><a class="url" href="${href('/', frag)}">${url(frag)}</a></div></li>`).join('') +
+    STEPS.map(([text, frag]) => `<li><div><p>${esc(text)}</p><a class="url" href="${href('/', frag)}">${typed(frag)}</a></div></li>`).join('') +
     '</ol></section>' +
     `<section class="section"><h2>Use cases</h2><p>Every card is a working link. Open it fullscreen, or load it into the editor and make it yours.</p><div class="examples">${shown}</div>` +
     `<details class="more-examples"><summary class="btn"><span class="when-closed">More use cases</span><span class="when-open">Fewer use cases</span></summary><div class="examples">${more}</div></details></section>` +

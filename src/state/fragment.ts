@@ -72,5 +72,9 @@ export function serializeFragment(state: State, order: readonly string[]): strin
   for (const key of keys) {
     parts.push(`${key}=${encodeComponent(state.params[key])}`);
   }
-  return parts.join('&');
+  // Chat apps and linkifiers end a link before trailing punctuation, so a
+  // link ending in "!" or "." would lose it. Encode any such tail.
+  return parts.join('&').replace(/[!'()*,.:;?~]+$/, (tail) =>
+    [...tail].map((c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`).join(''),
+  );
 }

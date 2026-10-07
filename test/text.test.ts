@@ -30,6 +30,27 @@ describe('text pipeline', () => {
     ]);
   });
 
+  it('carries emphasis across the line breaks of a paragraph', () => {
+    const [slide] = parseMessage('**WELCOME HOME,\nGRANDMA!**');
+    expect(slide.lines.map((l) => l.runs)).toEqual([
+      [{ text: 'WELCOME HOME,', bold: true, italic: false }],
+      [{ text: 'GRANDMA!', bold: true, italic: false }],
+    ]);
+    const [two] = parseMessage('a *b\nc* d');
+    expect(two.lines[1].runs[0]).toEqual({ text: 'c', bold: false, italic: true });
+  });
+
+  it('ends emphasis at a blank line or a heading', () => {
+    expect(parseMessage('**a\n\nb**')[0].lines.flatMap((l) => l.runs).some((r) => r.bold)).toBe(false);
+    expect(parseMessage('**a\n# b**')[0].lines.flatMap((l) => l.runs).some((r) => r.bold)).toBe(false);
+    expect(plain('**a\n\nb**')).toEqual(['**a\n\nb**']);
+  });
+
+  it('keeps code spans on one line', () => {
+    const [slide] = parseMessage('a `b\nc` d');
+    expect(slide.lines.flatMap((l) => l.runs).some((r) => r.code)).toBe(false);
+  });
+
   it('leaves unmatched markers alone', () => {
     expect(plain('2 * 3 = 6')).toEqual(['2 * 3 = 6']);
     expect(plain('#nospace')).toEqual(['#nospace']);

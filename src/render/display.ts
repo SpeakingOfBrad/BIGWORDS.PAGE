@@ -172,8 +172,9 @@ function inkOverhang(block: HTMLElement): [number, number, number, number] {
       let j = i;
       let text = '';
       while (j < chars.length && !isSpace(chars[j].c) && chars[j].font === chars[i].font) text += chars[j++].c;
-      const atStart = isSpace(chars[i - 1]?.c); // may begin a wrapped line
-      const atEnd = isSpace(chars[j]?.c); // may end a wrapped line
+      // Lines never wrap, so only a line's first and last runs reach its edges.
+      const atStart = i === 0;
+      const atEnd = j === chars.length;
       if (atStart || atEnd || firstLine || lastLine) {
         const ink = measureInk(ctx, text, chars[i].font, fontReady(chars[i].font));
         if (atStart) left = Math.max(left, ink.left * em);

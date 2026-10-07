@@ -1,6 +1,6 @@
 # BIGWORDS.PAGE reference
 
-BIGWORDS.PAGE shows a message as large as the screen allows. Everything about the display lives in the URL, so a link *is* the display. There are no accounts and no backend, and nothing is stored anywhere.
+BIGWORDS.PAGE shows a message as large as the screen allows. Everything about the display is in the URL, so sharing the link shares the display. There are no accounts and no backend, and nothing is stored anywhere.
 
 The [editor]({origin}/editor) is the easiest way to make a display. All of the URL parameters are documented here, so generating links is easy too.
 
@@ -60,7 +60,9 @@ Use standard percent-encoding.
 | `{` `}` | `%7B` `%7D` | Optional |
 | `\` | `%5C` | Optional |
 
-When building a URL yourself, you only strictly need to encode spaces, new lines, `&` and `%`. The editor always produces fully encoded URLs.
+You can type spaces and emoji into the address bar as they are. The browser encodes them, and a link copied from the address bar has them encoded. New lines, `&`, `#` and `%` in the message always have to be written encoded. The editor always produces fully encoded URLs.
+
+Messaging apps and other tools that turn URLs into links usually stop the link before punctuation at the very end, so `#Hello!` gets linked as `#Hello`. Encode punctuation at the end of a URL, such as `!` as `%21` or `.` as `%2E`. The editor does this for you.
 
 ## Parameters
 
@@ -86,7 +88,7 @@ When building a URL yourself, you only strictly need to encode spaces, new lines
 | `until` | Countdown target | ISO 8601 date and time (`2026-12-31T23:59:00`) | *(none)* |
 | `timer` | Countdown length, from when the page opens. Use `until` or `timer`, not both. | Seconds (`14400`), or `d`, `h`, `m`, `s` amounts (`4h`, `1h30m`) | *(none)* |
 | `cdfmt` | Countdown format | `label`, `colon` | `label` |
-| `zero` | What happens at zero | `freeze`, `hide`, or a replacement message | `freeze` |
+| `zero` | What happens at zero | `freeze`, `hide`, or a replacement message, which can use formatting and line breaks like the main one | `freeze` |
 | `interval` | Seconds per slide | Whole number from 1 to 86400 (larger values count as 86400) | `5` |
 | `wake` | Keep the screen awake | `on`, `off` | `on` |
 
@@ -94,7 +96,7 @@ An invalid value (bad hex, unknown font, impossible date…) quietly falls back 
 
 ## Formatting
 
-There is one rendering mode. A small markdown subset always applies; a message without any markdown just shows as plain text.
+Messages support a small part of Markdown. A message without any formatting shows as plain text.
 
 | Write | Get |
 |---|---|
@@ -107,8 +109,10 @@ There is one rendering mode. A small markdown subset always applies; a message w
 | `## text` at the start of a line | Heading, 1.5× the base size |
 | `%0A` | Line break |
 
-Nothing else: no lists, tables, links, quotes, images or rules. Remember that `#` must be written `%23` in a URL:
+Other Markdown, such as lists, links and images, shows as plain text. In a URL, write a heading's `#` as `%23`:
 [`{origin}/#%23%20Gate%2012%0ABoarding%20now`]({origin}/#%23%20Gate%2012%0ABoarding%20now)
+
+**Formatting can span lines.** Bold, italic and strikethrough carry over line breaks, so `**WELCOME HOME,%0AGRANDMA!**` is bold on both lines. A blank line or a heading ends them, and a marker without a matching one is shown as typed.
 
 **Underscores inside words are left alone**, as in standard Markdown, so names like `Home_Guest_5G`, `snake_case` or `first_name@example.com` show exactly as typed. Only an underscore at a word boundary starts or ends emphasis.
 
@@ -159,7 +163,7 @@ All fonts ship with the site, each next to its license file. A font is only down
 
 ## Size
 
-With `size=auto` (the default), the text grows to the largest size at which the whole block fits inside the display minus its padding. Headings count at their full size. Text wraps at word boundaries and your line breaks are always kept. The size is recalculated whenever the window is resized or rotated, and each slide is fitted on its own.
+With `size=auto` (the default), the text grows to the largest size at which the whole block fits inside the display minus its padding. Headings count at their full size. Text never wraps on its own: each line of the message stays on one line, so long lines make the text smaller. Add line breaks (`%0A`) where you want them. The size is recalculated whenever the window is resized or rotated, and each slide is fitted on its own.
 
 | Value | Meaning |
 |---|---|
@@ -285,7 +289,7 @@ The editor counts the URL's characters and warns as it nears about 2,000. Some m
 | [Location](#location) | `geo:` | Opens a maps app (Android) |
 | [Plain text](#plain-text) | Anything else | Shows the text |
 
-The editor's **QR code** section has a form for each type and writes the URL for you. Building one yourself, follow the usual [encoding](#encoding) inside the `qr` value too: spaces are `%20` and `&` is `%26`.
+The editor's **QR code** section has a form for each type and writes the URL for you. If you build one yourself, [encode](#encoding) the `qr` value like the rest of the URL, with `%26` for `&`.
 
 ### Placement and size
 
@@ -389,7 +393,7 @@ Any value that isn't one of the above, such as `qr=Table%2012`, goes in the code
 | `full` | Fits inside the display, letterboxed; text on top |
 | `above` / `below` | Placed above or below the text, which fits into the space left |
 
-The image loads straight from its host, which is never told which page asked for it. Like any image on the web, the host does see the viewing device's IP address and browser, and with `refresh` it sees a request every time the page reloads. Some hosts refuse to serve images to other sites, so an image that opens fine in its own tab can still fail here. If an image fails, the viewer simply leaves it out; the editor shows a warning.
+The image loads straight from its host, which is never told which page asked for it. Like any image on the web, the host does see the viewing device's IP address and browser, and with `refresh` it sees a request every time the page reloads. Some hosts refuse to serve images to other sites, so an image that opens fine in its own tab can still fail here. If an image fails, the viewer leaves it out and the editor shows a warning.
 
 `refresh=N` reloads the page every N seconds. It's only useful when the image URL points at something that changes, such as a webcam snapshot.
 

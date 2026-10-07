@@ -133,7 +133,8 @@ function parseInline(s: string, style: Style, out: Run[]): void {
     // `code`: contents were protected by resolveEscapes and render as typed.
     if (s[k] === '`') {
       const end = s.indexOf('`', k + 1);
-      if (end > k + 1) {
+      const newline = s.indexOf('\n', k + 1);
+      if (end > k + 1 && (newline === -1 || end < newline)) {
         flush();
         out.push({ text: s.slice(k + 1, end), ...style, code: true });
         k = end + 1;
@@ -210,20 +211,48 @@ function finalizeRuns(runs: Run[]): Run[] {
   return out;
 }
 
-/** Render one slide's (escape-resolved) source into lines. */
+/** Split runs at the line breaks inside them, one run list per line. */
+function splitRunLines(runs: Run[]): Run[][] {
+  const lines: Run[][] = [[]];
+  for (const run of runs) {
+    run.text.split('\n').forEach((text, i) => {
+      if (i > 0) lines.push([]);
+      if (text) lines[lines.length - 1].push({ ...run, text });
+    });
+  }
+  return lines;
+}
+
+/**
+ * Render one slide's (escape-resolved) source into lines. As in Markdown,
+ * consecutive lines form a paragraph and emphasis can span its line breaks;
+ * a blank line or a heading ends the paragraph.
+ */
 export function parseSlide(src: string): Slide {
-  const lines: Line[] = src.split(/\r\n|\r|\n/).map((raw) => {
-    let level: 0 | 1 | 2 = 0;
-    let text = raw;
+  const lines: Line[] = [];
+  let para: string[] = [];
+  const endParagraph = () => {
+    if (!para.length) return;
+    const runs: Run[] = [];
+    parseInline(para.join('\n'), { bold: false, italic: false }, runs);
+    for (const lineRuns of splitRunLines(runs)) lines.push({ level: 0, runs: finalizeRuns(lineRuns) });
+    para = [];
+  };
+  for (const raw of src.split(/\r\n|\r|\n/)) {
     const m = /^(#{1,2}) +(.*)$/.exec(raw);
     if (m) {
-      level = m[1].length as 1 | 2;
-      text = m[2];
+      endParagraph();
+      const runs: Run[] = [];
+      parseInline(m[2], { bold: false, italic: false }, runs);
+      lines.push({ level: m[1].length as 1 | 2, runs: finalizeRuns(runs) });
+    } else if (raw.trim() === '') {
+      endParagraph();
+      lines.push({ level: 0, runs: raw ? finalizeRuns([{ text: raw, bold: false, italic: false }]) : [] });
+    } else {
+      para.push(raw);
     }
-    const runs: Run[] = [];
-    parseInline(text, { bold: false, italic: false }, runs);
-    return { level, runs: finalizeRuns(runs) };
-  });
+  }
+  endParagraph();
   const hasCountdown = lines.some((l) => l.runs.some((r) => r.countdown));
   return { lines, hasCountdown };
 }

@@ -722,7 +722,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
 
   const cdfmt = options(h('select', { id: uid('cdfmt') }), CD_FORMATS, { label: 'Labels (2d 14h 06m 32s)', colon: 'Colons (02:14:06:32)' });
   const zeroSel = options(h('select', { id: uid('zero') }), ['freeze', 'hide', 'message'], { freeze: 'Freeze at zero', hide: 'Hide', message: 'Show a message' });
-  const zeroMsg = h('input', { type: 'text', class: 'grow', placeholder: 'Message shown at zero', 'aria-label': 'Message shown at zero' });
+  const zeroMsg = h('textarea', { class: 'zero-msg', rows: '2', spellcheck: 'true', placeholder: 'Message shown at zero', 'aria-label': 'Message shown at zero' });
   const cdHint = h('p', { class: 'hint' });
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
 
@@ -814,7 +814,8 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     untilPanel,
     timerPanel,
     row(label('Format', cdfmt.id), cdfmt),
-    row(label('At zero', zeroSel.id), zeroSel, zeroMsg),
+    row(label('At zero', zeroSel.id), zeroSel),
+    zeroMsg,
     cdHint,
   );
 

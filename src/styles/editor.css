@@ -196,6 +196,9 @@ details.group[open] > summary::after {
   font-family: var(--mono);
   line-height: 1.45;
 }
+.page-editor textarea.zero-msg {
+  min-height: 0;
+}
 .page-editor input[type='number'] {
   width: 84px;
 }
