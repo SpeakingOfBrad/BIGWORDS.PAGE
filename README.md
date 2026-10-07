@@ -2,6 +2,11 @@
 
 Show a message as big as the screen allows. The URL is the whole display: no accounts, no login, no backend.
 
+<picture>
+  <source media="(prefers-reduced-motion: reduce)" srcset="docs/media/demo-poster.png">
+  <img src="docs/media/demo.gif" width="600" alt="Three example displays: a handwritten &quot;Welcome home, Grandma!&quot; sign, a quiz countdown timer, and a café Wi-Fi password with a QR code.">
+</picture>
+
 ```
 https://your-domain/#Hello%20World&bg=000000&fg=ffd60a&font=4&anim=pulse
 ```
