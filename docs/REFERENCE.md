@@ -84,6 +84,7 @@ When typing by hand you only strictly need to encode spaces, new lines, `&` and 
 | `imgpos` | Image position | `bg`, `full`, `above`, `below` | `bg` |
 | `refresh` | Reload the page every N seconds | Whole number from 1 to 86400 (larger values count as 86400) | *(none)* |
 | `until` | Countdown target | ISO 8601 date and time (`2026-12-31T23:59:00`) | *(none)* |
+| `timer` | Countdown length, from when the page opens. Use `until` or `timer`, not both. | Seconds (`14400`), or `d`, `h`, `m`, `s` amounts (`4h`, `1h30m`) | *(none)* |
 | `cdfmt` | Countdown format | `label`, `colon` | `label` |
 | `zero` | What happens at zero | `freeze`, `hide`, or a replacement message | `freeze` |
 | `interval` | Seconds per slide | Whole number from 1 to 86400 (larger values count as 86400) | `5` |
@@ -120,7 +121,7 @@ Nothing else: no lists, tables, links, quotes, images or rules. Remember that `#
 
 | Token | Meaning |
 |---|---|
-| `{countdown}` | Replaced by the live countdown when `until` is set. Works in any slide. Shown literally if there is no `until`. |
+| `{countdown}` | Replaced by the live countdown when `until` or `timer` is set. Works in any slide. Shown literally if neither is set. |
 | `\|\|` | Slide break |
 
 ### Escapes
@@ -221,7 +222,31 @@ The editor also accepts a width × height in pixels and turns it into a ratio (1
 
 ## Countdown
 
-Set `until` to an ISO 8601 date and time, then put `{countdown}` in the message. The time is the **viewing device's local time**, unless you add a zone such as `Z` or `+02:00`. The editor's date picker takes the time in your own time zone and writes it to the URL in UTC (with `Z`), so the countdown ends at the same moment everywhere. If the message is empty, the countdown is shown on its own.
+There are two kinds: `until` counts down to a date and time, and `timer` counts down for a length of time. Set one and put `{countdown}` in the message. If the message is empty, the countdown is shown on its own. Format and `zero` work the same for both.
+
+### Until a date and time
+
+Set `until` to an ISO 8601 date and time. The time is the **viewing device's local time**, unless you add a zone such as `Z` or `+02:00`. The editor's date picker takes the time in your own time zone and writes it to the URL in UTC (with `Z`), so the countdown ends at the same moment everywhere.
+
+### For a length of time
+
+Set `timer` to a length of time. **The timer starts when the page opens**, so reloading the page or opening the link again starts it over, and so does `refresh`. Each device that opens the link runs its own timer. It keeps time while the tab is in the background or the screen is off.
+
+| `timer` | Length |
+|---|---|
+| `14400` | A plain number is seconds: 4 hours |
+| `4h` | 4 hours |
+| `1h30m` | 1 hour 30 minutes |
+| `2d12h` | 2 days 12 hours |
+| `45s` | 45 seconds |
+
+Use any of `d`, `h`, `m` and `s`, in any order, with no spaces. Amounts add up and can go past the next unit, so `90m` is 1 hour 30 minutes and `1d28h` is 2 days 4 hours. The longest timer is 99 days.
+
+[`{origin}/#Break%20ends%20in%0A{countdown}&timer=15m&zero=Back%20to%20work!`]({origin}/#Break%20ends%20in%0A{countdown}&timer=15m&zero=Back%20to%20work!)
+
+**`until` and `timer` can't be used together.** If a link has both, the one that comes first is used and the other is ignored. The editor shows one at a time: pick **Countdown** or **Timer** at the top of its Countdown or timer section.
+
+### Format and zero
 
 | `cdfmt` | Example |
 |---|---|

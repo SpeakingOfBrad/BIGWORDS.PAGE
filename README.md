@@ -10,7 +10,7 @@ https://your-domain/#Hello%20World&bg=000000&fg=ffd60a&font=4&anim=pulse
 - **Editor** `/editor#…`: live preview and controls. The address bar always mirrors the state, **Copy URL** copies the viewer link, and the QR button shows it as a code to scan.
 - **Docs** `/docs`: the full reference, built from [`docs/REFERENCE.md`](docs/REFERENCE.md).
 
-Everything lives in the URL fragment, which browsers never send to the server. Features: auto-fit sizing, a small markdown subset with relative headings, slides (`||`), countdowns (`{countdown}` + `until`), animations, bundled open-source fonts, aspect-ratio framing, client-side QR codes (links, Wi-Fi, calls, texts, email, locations) and embedded images. See the **[reference](docs/REFERENCE.md)** for every parameter.
+Everything lives in the URL fragment, which browsers never send to the server. Features: auto-fit sizing, a small markdown subset with relative headings, slides (`||`), countdowns (`{countdown}` with `until` for a date and time or `timer` for a length of time), animations, bundled open-source fonts, aspect-ratio framing, client-side QR codes (links, Wi-Fi, calls, texts, email, locations) and embedded images. See the **[reference](docs/REFERENCE.md)** for every parameter.
 
 ## Development
 

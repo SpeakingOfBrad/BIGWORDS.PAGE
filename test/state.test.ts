@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseFragment, serializeFragment, safeDecode } from '../src/state/fragment';
-import { PARAM_ORDER, parsePad, formatPad, parseRatio, parseUntil, pruneDefaults, resolveSettings } from '../src/state/params';
+import { MAX_TIMER, PARAM_ORDER, parsePad, formatPad, parseRatio, parseTimer, formatTimer, parseUntil, pruneDefaults, resolveSettings } from '../src/state/params';
 import { parseSize, sizeToPx } from '../src/state/size';
 
 describe('fragment', () => {
@@ -87,6 +87,38 @@ describe('params', () => {
     expect(d.getMinutes()).toBe(59);
     expect(parseUntil('2026-12-31T23:59:00Z')!.toISOString()).toBe('2026-12-31T23:59:00.000Z');
     expect(parseUntil('nope')).toBeNull();
+  });
+
+  it('parses timer as seconds or d/h/m/s in any order', () => {
+    expect(parseTimer('14400')).toBe(14400);
+    expect(parseTimer('4h')).toBe(14400);
+    expect(parseTimer('1h30m')).toBe(5400);
+    expect(parseTimer('30m1h')).toBe(5400);
+    expect(parseTimer('3m2d5s9h')).toBe(2 * 86400 + 9 * 3600 + 3 * 60 + 5);
+    expect(parseTimer('1d28h')).toBe(52 * 3600);
+    expect(parseTimer('90M')).toBe(5400);
+    expect(parseTimer('1h 30m')).toBe(5400);
+    expect(parseTimer('1h1h')).toBe(7200);
+    expect(parseTimer('1000d')).toBe(MAX_TIMER);
+    for (const bad of ['', '0', '0h', 'h', '1.5h', '1x', '-5', '1h-2m', 'PT4H']) expect(parseTimer(bad)).toBeNull();
+  });
+
+  it('formats timer in whole units, largest first', () => {
+    expect(formatTimer(52 * 3600)).toBe('2d4h');
+    expect(formatTimer(5400)).toBe('1h30m');
+    expect(formatTimer(45)).toBe('45s');
+    expect(formatTimer(86401)).toBe('1d1s');
+  });
+
+  it('until and timer are mutually exclusive: the first in the URL wins', () => {
+    const timerFirst = resolveSettings(parseFragment('#{countdown}&timer=4h&until=2027-01-01T00:00:00Z'));
+    expect(timerFirst.timer).toBe(14400);
+    expect(timerFirst.until).toBeNull();
+    const untilFirst = resolveSettings(parseFragment('#{countdown}&until=2027-01-01T00:00:00Z&timer=4h'));
+    expect(untilFirst.timer).toBeNull();
+    expect(untilFirst.until).not.toBeNull();
+    // An empty value doesn't count as coming first.
+    expect(resolveSettings(parseFragment('#&until=&timer=5m')).timer).toBe(300);
   });
 
   it('zero accepts freeze, hide or a message', () => {

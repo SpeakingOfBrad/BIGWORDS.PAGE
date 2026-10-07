@@ -215,6 +215,10 @@ export class Display {
   private stopTick: (() => void) | null = null;
   private expired = false;
   private cdText = '';
+  /** When the countdown ends, in ms since the epoch, from `until` or `timer`. */
+  private deadline: number | null = null;
+  /** The running timer: its length and when it started. It restarts only when the length changes. */
+  private timer: { seconds: number; start: number } | null = null;
   private resizeObs: ResizeObserver;
   private areaObs: ResizeObserver;
   private media: MediaQueryList | null = null;
@@ -277,14 +281,32 @@ export class Display {
     this.box.classList.toggle('bw-ratio', !!settings.ratio);
     this.buildImage();
     this.buildQr();
-    this.expired = !!settings.until && Date.now() >= settings.until.getTime();
-    this.cdText = settings.until ? formatCountdown(settings.until.getTime() - Date.now(), settings.cdfmt) : '';
+    this.deadline = this.countdownDeadline(settings);
+    this.expired = this.deadline !== null && Date.now() >= this.deadline;
+    this.cdText = this.deadline !== null ? formatCountdown(this.deadline - Date.now(), settings.cdfmt) : '';
     this.buildSlides();
     this.layout();
 
-    if (settings.until) {
+    if (this.deadline !== null) {
       this.stopTick = everySecond(() => this.tick());
     }
+  }
+
+  /**
+   * A timer starts on the next whole second after it is first shown, so it
+   * ticks in step with the clock and shows its full length for that first
+   * moment. It works from that start time rather than counting ticks, so it
+   * stays right when a background tab's timers are throttled.
+   */
+  private countdownDeadline(settings: Settings): number | null {
+    if (settings.timer === null) {
+      this.timer = null;
+      return settings.until ? settings.until.getTime() : null;
+    }
+    if (this.timer?.seconds !== settings.timer) {
+      this.timer = { seconds: settings.timer, start: Math.ceil(Date.now() / 1000) * 1000 };
+    }
+    return this.timer.start + this.timer.seconds * 1000;
   }
 
   // ---------------------------------------------------------------- colors
@@ -388,9 +410,9 @@ export class Display {
   private activeSlides(): Slide[] {
     const s = this.s!;
     let message = s.message;
-    if (s.until && message.trim() === '') message = COUNTDOWN_TOKEN;
+    if (this.deadline !== null && message.trim() === '') message = COUNTDOWN_TOKEN;
     const slides = parseMessage(message);
-    if (!s.until || !this.expired) return slides;
+    if (this.deadline === null || !this.expired) return slides;
     const zero = s.zero;
     if (zero.kind === 'freeze') return slides;
     if (slides.length === 1) {
@@ -402,7 +424,6 @@ export class Display {
   }
 
   private renderBlock(slide: Slide): HTMLElement {
-    const s = this.s!;
     const block = el('div', 'bw-block');
     for (const line of slide.lines) {
       const ln = el('div', line.level ? `bw-line bw-h${line.level}` : 'bw-line');
@@ -414,7 +435,7 @@ export class Display {
         if (run.strike) span.classList.add('bw-s');
         if (run.code) span.classList.add('bw-code');
         if (run.countdown) {
-          if (s.until) {
+          if (this.deadline !== null) {
             span.classList.add('bw-cd');
             span.textContent = this.cdText;
           } else {
@@ -509,8 +530,8 @@ export class Display {
 
   private tick(): void {
     const s = this.s;
-    if (!s?.until) return;
-    const remaining = s.until.getTime() - Date.now();
+    if (!s || this.deadline === null) return;
+    const remaining = this.deadline - Date.now();
     const text = formatCountdown(remaining, s.cdfmt);
     const nowExpired = remaining <= 0;
     if (nowExpired && !this.expired) {

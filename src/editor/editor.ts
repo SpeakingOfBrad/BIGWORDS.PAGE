@@ -14,9 +14,12 @@ import {
   QR_SIZE_MAX,
   QR_SIZE_MIN,
   SPEEDS,
+  countdownSource,
   formatPad,
+  formatTimer,
   parsePad,
   parseRatio,
+  parseTimer,
   pruneDefaults,
   resolveSettings,
 } from '../state/params';
@@ -95,6 +98,20 @@ function toLocalInput(d: Date): string {
 function localInputToUtc(v: string): string {
   const d = new Date(v);
   return isNaN(d.getTime()) ? '' : d.toISOString().replace(/\.\d+Z$/, 'Z');
+}
+
+/**
+ * `until` and `timer` are mutually exclusive and the first in the URL wins.
+ * The editor writes params in a fixed order, so drop the one that lost before
+ * it could end up first.
+ */
+function loadState(hash: string): State {
+  if (hash.length <= 1) return structuredClone(STARTER);
+  const state = parseFragment(hash);
+  const source = countdownSource(state.params);
+  if (source === 'until') delete state.params.timer;
+  if (source === 'timer') delete state.params.until;
+  return state;
 }
 
 function gcd(a: number, b: number): number {
@@ -254,7 +271,7 @@ function keepFocusedFieldVisible(): () => void {
 export function mountEditor(app: HTMLElement): { destroy(): void } {
   document.body.className = 'page-site page-editor';
 
-  let state: State = location.hash.length > 1 ? parseFragment(location.hash) : structuredClone(STARTER);
+  let state: State = loadState(location.hash);
   const syncers: (() => void)[] = [];
   const onSync = (fn: () => void) => syncers.push(fn);
   const syncAll = () => syncers.forEach((fn) => fn());
@@ -668,20 +685,80 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     h('p', { class: 'hint' }, 'Pixel sizes are reduced to a ratio (1920 × 1080 → 16:9); only the ratio goes in the URL. The dashed frame in the preview shows the region.'),
   );
 
-  // --- Countdown
-  const cdGroup = group('Countdown', true, () => !!get('until'));
+  // --- Countdown and timer
+  // Two different things that share {countdown}, the format and what happens
+  // at zero: a countdown ends at a fixed moment, a timer runs for a length of
+  // time from when the display opens. Only one can be in the URL, so the
+  // editor shows one at a time. Switching keeps the other's value here, out of
+  // the URL, so switching back restores it.
+  const cdGroup = group('Countdown or timer', true, () => !!get('until') || !!get('timer'));
+  type CdKind = 'until' | 'timer';
+  let cdKind: CdKind = get('timer') ? 'timer' : 'until';
+  const stashed: Record<CdKind, string> = { until: '', timer: '' };
+  const kindBtn = (title: string, desc: string) =>
+    h('button', { class: 'kind-btn', type: 'button', 'aria-pressed': 'false' }, h('span', { class: 'title' }, title), h('span', { class: 'desc' }, desc));
+  const kindBtns: Record<CdKind, HTMLButtonElement> = {
+    until: kindBtn('Countdown', 'Ends at a date and time, the same moment on every screen.'),
+    timer: kindBtn('Timer', 'Runs for a length of time, starting when the display opens.'),
+  };
+  const kindGrid = h('div', { class: 'kind-grid', role: 'group', 'aria-label': 'Countdown or timer' }, kindBtns.until, kindBtns.timer);
+
   const until = h('input', { type: 'datetime-local', step: '1', id: uid('until') });
   const untilClear = h('button', { class: 'btn btn-sm', type: 'button' }, 'Clear');
+  const untilHint = h('p', { class: 'hint' });
+  const untilPanel = h('div', { class: 'kind-panel' }, row(label('Ends at', until.id), until, untilClear), untilHint);
+
+  const timerUnits = [
+    ['Days', 86400],
+    ['Hours', 3600],
+    ['Minutes', 60],
+    ['Seconds', 1],
+  ] as const;
+  const timerInputs = timerUnits.map(() => h('input', { type: 'number', min: '0', step: '1', placeholder: '0', id: uid('timer') }));
+  const timerBox = h('div', { class: 'pad-sides' }, ...timerInputs.map((inp, i) => h('label', {}, timerUnits[i][0], inp)));
+  const timerClear = h('button', { class: 'btn btn-sm', type: 'button' }, 'Clear');
+  const timerHint = h('p', { class: 'hint' });
+  const timerPanel = h('div', { class: 'kind-panel' }, row(label('Runs for', timerInputs[0].id), timerClear), timerBox, timerHint);
+
   const cdfmt = options(h('select', { id: uid('cdfmt') }), CD_FORMATS, { label: 'Labels (2d 14h 06m 32s)', colon: 'Colons (02:14:06:32)' });
   const zeroSel = options(h('select', { id: uid('zero') }), ['freeze', 'hide', 'message'], { freeze: 'Freeze at zero', hide: 'Hide', message: 'Show a message' });
   const zeroMsg = h('input', { type: 'text', class: 'grow', placeholder: 'Message shown at zero', 'aria-label': 'Message shown at zero' });
   const cdHint = h('p', { class: 'hint' });
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'local time';
+
+  (Object.keys(kindBtns) as CdKind[]).forEach((kind) => {
+    kindBtns[kind].addEventListener('click', () => {
+      if (kind === cdKind) return;
+      const other = cdKind;
+      stashed[other] = get(other);
+      cdKind = kind;
+      delete state.params[other];
+      set(kind, stashed[kind]);
+      syncAll();
+    });
+  });
   // The picker shows the editing device's time zone; the URL gets UTC, so the
   // countdown ends at the same moment on every viewing device.
-  until.addEventListener('input', () => set('until', localInputToUtc(until.value)));
+  until.addEventListener('input', () => {
+    set('until', localInputToUtc(until.value));
+    syncCountdown();
+  });
   untilClear.addEventListener('click', () => {
     set('until', '');
+    syncAll();
+  });
+  // Any amounts add up, so 90 minutes or 28 hours work; leaving a field
+  // rewrites them in whole units (1h 30m, 1d 4h).
+  timerInputs.forEach((inp) => {
+    inp.addEventListener('input', () => {
+      const total = timerInputs.reduce((sum, el, i) => sum + (/^\d+$/.test(el.value) ? +el.value * timerUnits[i][1] : 0), 0);
+      set('timer', total > 0 ? formatTimer(total) : '');
+      syncCountdown();
+    });
+    inp.addEventListener('change', syncAll);
+  });
+  timerClear.addEventListener('click', () => {
+    set('timer', '');
     syncAll();
   });
   cdfmt.addEventListener('change', () => set('cdfmt', cdfmt.value));
@@ -692,26 +769,50 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   };
   zeroSel.addEventListener('change', writeZero);
   zeroMsg.addEventListener('input', writeZero);
-  onSync(() => {
+  const syncCountdown = () => {
+    // A link opened or typed in the address bar decides which one is showing.
+    if (get('until')) cdKind = 'until';
+    else if (get('timer')) cdKind = 'timer';
+    kindBtns.until.setAttribute('aria-pressed', String(cdKind === 'until'));
+    kindBtns.timer.setAttribute('aria-pressed', String(cdKind === 'timer'));
+    untilPanel.hidden = cdKind !== 'until';
+    timerPanel.hidden = cdKind !== 'timer';
+
     const s = resolveSettings(state);
     if (document.activeElement !== until) until.value = s.until ? toLocalInput(s.until) : '';
+    if (!timerInputs.includes(document.activeElement as HTMLInputElement)) {
+      let rest = parseTimer(get('timer')) ?? 0;
+      timerInputs.forEach((inp, i) => {
+        const n = Math.floor(rest / timerUnits[i][1]);
+        rest -= n * timerUnits[i][1];
+        inp.value = n ? String(n) : '';
+      });
+    }
     cdfmt.value = s.cdfmt;
     if (document.activeElement !== zeroMsg && document.activeElement !== zeroSel) {
       zeroSel.value = s.zero.kind;
       zeroMsg.value = s.zero.kind === 'message' ? s.zero.message : '';
     }
     zeroMsg.hidden = zeroSel.value !== 'message';
-    const hasToken = state.message.includes('{countdown}');
+
     const floating = !!s.until && !/(Z|[+-]\d{2}:?\d{2})$/i.test(get('until').trim());
+    untilHint.textContent = floating
+      ? 'This link has no time zone, so each viewing device counts down to this time in its own zone. Pick a time to pin it to one moment everywhere.'
+      : `Pick the time in your time zone (${timeZone}). It goes in the URL as UTC, so the countdown ends at the same moment everywhere.`;
+    timerHint.textContent =
+      'Every screen runs its own timer from when it opens the link. Reloading the page or opening the link again starts it over.' +
+      (s.refresh ? ' Reload every (under Image) reloads the page, so it restarts the timer each time.' : '');
+    const hasToken = state.message.includes('{countdown}');
     cdHint.textContent =
-      s.until && !hasToken && state.message.trim()
-        ? 'Add {countdown} to the message to show the time remaining.'
-        : floating
-          ? 'This link has no time zone, so each viewing device counts down to this time in its own zone. Pick a time to pin it to one moment everywhere.'
-          : `Pick the time in your time zone (${timeZone}). It goes in the URL as UTC, so the countdown ends at the same moment everywhere.`;
-  });
+      (s.until || s.timer) && !hasToken && state.message.trim()
+        ? `Add {countdown} to the message to show the time ${s.timer ? 'left on the timer' : 'remaining'}.`
+        : 'Put {countdown} in the message where the time should show.';
+  };
+  onSync(syncCountdown);
   cdGroup.append(
-    row(label('Target', until.id), until, untilClear),
+    kindGrid,
+    untilPanel,
+    timerPanel,
     row(label('Format', cdfmt.id), cdfmt),
     row(label('At zero', zeroSel.id), zeroSel, zeroMsg),
     cdHint,
@@ -910,7 +1011,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   }
 
   const onHashChange = () => {
-    state = location.hash.length > 1 ? parseFragment(location.hash) : structuredClone(STARTER);
+    state = loadState(location.hash);
     syncAll();
     renderSlides();
     commit();

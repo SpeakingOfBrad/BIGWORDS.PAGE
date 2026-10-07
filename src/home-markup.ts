@@ -37,7 +37,7 @@ const FEATURES: [string, string][] = [
   ['Auto-fit', 'Text grows to fill any screen, from a phone to a stadium board.'],
   ['Markdown', '**bold**, *italic*, # and ## headings, real line breaks.'],
   ['Slides', 'Split with || and they rotate on a timer.'],
-  ['Countdowns', 'Put {countdown} anywhere and set &until=.'],
+  ['Countdowns', 'Put {countdown} anywhere and set &until= for a date or &timer= for a length of time.'],
   ['QR codes & images', 'Links, Wi-Fi, calls, texts and email, generated in your browser. No third-party services.'],
   ['Private by design', 'The message lives in the URL fragment, which browsers never send to a server.'],
 ];

@@ -139,6 +139,16 @@ check('zero=hide drops countdown slides', (await page.locator('.bw-slide').count
 await page.goto(BASE + '/#Wait%20{countdown}&until=2000-01-01T00:00:00&zero=Go!');
 await settle();
 check('zero=message replaces', (await blockInfo())?.text === 'Go!');
+await page.goto(BASE + '/#{countdown}&timer=4h');
+await settle();
+const tm = await page.locator('.bw-cd').textContent();
+check('timer counts down from its length', /^(4h 00m 00s|3h 59m 5\ds)$/.test(tm), tm);
+await page.goto(BASE + '/#{countdown}&timer=1h&until=2000-01-01T00:00:00&zero=Go!');
+await settle();
+check('first of timer and until wins', /^(1h 00m 00s|59m 5\ds)$/.test(await page.locator('.bw-cd').textContent()));
+await page.goto(BASE + '/#Wait%20{countdown}&timer=2s&zero=Done!');
+await page.waitForTimeout(3500);
+check('timer reaches zero', (await blockInfo())?.text === 'Done!', (await blockInfo())?.text);
 
 // QR
 await page.goto(BASE + '/#Scan&qr=https://example.com/a?b=1%26c=2&qrpos=below');
@@ -208,6 +218,25 @@ check('address bar QR edit fills the form', (await qrForm.getByLabel('Type', { e
 await page.evaluate(() => (location.hash = '#From%20address%20bar&bg=123456'));
 await settle();
 check('address bar edit syncs controls', (await page.locator('textarea').inputValue()) === 'From address bar');
+const cdForm = page.locator('details', { has: page.locator('summary', { hasText: 'Countdown or timer' }) });
+await cdForm.locator('summary').click();
+check('countdown is the default kind', (await cdForm.getByLabel('Ends at', { exact: true }).isVisible()) && !(await cdForm.getByLabel('Minutes', { exact: true }).isVisible()));
+await cdForm.getByLabel('Ends at', { exact: true }).fill('2030-01-01T12:00');
+await settle();
+check('countdown field writes until', page.url().includes('until=2030-01-01T'), page.url());
+await cdForm.getByRole('button', { name: /^Timer/ }).click();
+await cdForm.getByLabel('Minutes', { exact: true }).fill('90');
+await settle();
+check('switching to timer swaps until for timer', page.url().includes('timer=1h30m') && !page.url().includes('until='), page.url());
+check('timer hides the countdown field', !(await cdForm.getByLabel('Ends at', { exact: true }).isVisible()));
+await cdForm.getByLabel('Minutes', { exact: true }).blur();
+check('timer fields normalize on leave', (await cdForm.getByLabel('Hours', { exact: true }).inputValue()) === '1' && (await cdForm.getByLabel('Minutes', { exact: true }).inputValue()) === '30');
+await cdForm.getByRole('button', { name: /^Countdown/ }).click();
+await settle();
+check('switching back restores until', page.url().includes('until=2030-01-01T') && !page.url().includes('timer='), page.url());
+await page.evaluate(() => (location.hash = '#{countdown}&timer=5m&until=2000-01-01T00:00:00Z'));
+await settle();
+check('editor drops the until that lost', !page.url().includes('until=') && page.url().includes('timer=5m'), page.url());
 await page.locator('.font-btn').nth(4).click();
 await settle();
 check('font picker writes font=4', page.url().includes('font=4'), page.url());

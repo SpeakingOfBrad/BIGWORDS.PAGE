@@ -270,6 +270,52 @@ details.group[open] > summary::after {
   color: var(--accent-fg);
   opacity: 0.75;
 }
+.kind-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.kind-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.kind-btn .title {
+  font-size: 15px;
+  font-weight: 600;
+}
+.kind-btn .desc {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--muted);
+}
+.kind-btn[aria-pressed='true'] {
+  background: var(--accent);
+  border-color: var(--accent-edge);
+  color: var(--accent-fg);
+}
+.kind-btn[aria-pressed='true'] .desc {
+  color: var(--accent-fg);
+  opacity: 0.75;
+}
+/* The fields for the chosen kind, set apart from the shared settings below. */
+.kind-panel {
+  margin: 8px 0 12px;
+  padding: 2px 0 4px 10px;
+  border-left: 3px solid var(--accent-edge);
+}
+.kind-panel .row > label.lbl {
+  min-width: 69px;
+}
 .chips {
   display: flex;
   flex-wrap: wrap;

@@ -34,6 +34,7 @@ export interface Settings {
   imgpos: ImgPos;
   refresh: number | null;
   until: Date | null;
+  timer: number | null; // seconds, counted from page load
   cdfmt: CdFormat;
   zero: ZeroBehavior;
   interval: number;
@@ -59,6 +60,7 @@ export const PARAM_DEFAULTS: Readonly<Record<string, string>> = {
   imgpos: 'bg',
   refresh: '',
   until: '',
+  timer: '',
   cdfmt: 'label',
   zero: 'freeze',
   interval: '5',
@@ -148,6 +150,51 @@ export function parseUntil(v: string | undefined): Date | null {
   return date;
 }
 
+/** Longest `timer`, in seconds (99 days). */
+export const MAX_TIMER = 99 * 86400;
+
+const UNIT_SECONDS: Record<string, number> = { d: 86400, h: 3600, m: 60, s: 1 };
+
+/**
+ * A `timer` length in seconds: a whole number of seconds (`14400`), or amounts
+ * of d, h, m and s in any order (`4h`, `1h30m`, `30m1h`). Repeated units add up
+ * and a unit may overflow into the next (`90m` is 1h 30m). Longer than
+ * MAX_TIMER counts as MAX_TIMER.
+ */
+export function parseTimer(v: string | undefined): number | null {
+  const str = v?.trim().toLowerCase().replace(/\s+/g, '') ?? '';
+  let total: number;
+  if (INT_RE.test(str)) total = parseInt(str, 10);
+  else if (/^(\d+[dhms])+$/.test(str)) {
+    total = 0;
+    for (const [, n, unit] of str.matchAll(/(\d+)([dhms])/g)) total += parseInt(n, 10) * UNIT_SECONDS[unit];
+  } else return null;
+  return total > 0 ? Math.min(total, MAX_TIMER) : null;
+}
+
+/** Seconds as the shortest `timer` value, largest unit first (`2d4h`, `1h30m`). */
+export function formatTimer(total: number): string {
+  let rest = Math.max(0, Math.floor(total));
+  let out = '';
+  for (const [unit, size] of Object.entries(UNIT_SECONDS)) {
+    const n = Math.floor(rest / size);
+    rest -= n * size;
+    if (n) out += `${n}${unit}`;
+  }
+  return out;
+}
+
+/**
+ * `until` and `timer` are mutually exclusive: whichever comes first in the URL
+ * is used and the other is ignored.
+ */
+export function countdownSource(params: Record<string, string>): 'until' | 'timer' | null {
+  for (const k of Object.keys(params)) {
+    if ((k === 'until' || k === 'timer') && params[k].trim() !== '') return k;
+  }
+  return null;
+}
+
 /** Smallest and largest `qrsize`, in percent of the display's shorter side. */
 export const QR_SIZE_MIN = 10;
 export const QR_SIZE_MAX = 50;
@@ -173,6 +220,7 @@ export function resolveSettings(state: State): Settings {
   const size = p.size?.trim().toLowerCase() === 'auto' ? null : parseSize(p.size ?? '');
   const zeroRaw = p.zero ?? '';
   const zeroKey = zeroRaw.trim().toLowerCase();
+  const source = countdownSource(p);
   const zero: ZeroBehavior =
     zeroKey === 'hide' ? { kind: 'hide' } : zeroKey === 'freeze' || zeroRaw.trim() === '' ? { kind: 'freeze' } : { kind: 'message', message: zeroRaw };
   return {
@@ -193,7 +241,8 @@ export function resolveSettings(state: State): Settings {
     img: imageUrl(p.img),
     imgpos: oneOf(IMG_POSITIONS, p.imgpos, 'bg'),
     refresh: seconds(p.refresh),
-    until: parseUntil(p.until),
+    until: source === 'until' ? parseUntil(p.until) : null,
+    timer: source === 'timer' ? parseTimer(p.timer) : null,
     cdfmt: oneOf(CD_FORMATS, p.cdfmt, 'label'),
     zero,
     interval: seconds(p.interval) ?? 5,
