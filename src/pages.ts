@@ -16,8 +16,8 @@ export interface PageMeta {
 export const PAGES = {
   home: {
     path: '/',
-    title: 'BIGWORDS.PAGE: Big words for any screen',
-    description: 'Show any message as big as the screen allows. The URL is the whole display: no app, no account, no backend. Free and open source.',
+    title: 'BIGWORDS.PAGE: Turn any screen into a sign',
+    description: 'Turn a phone, tablet or TV into a sign. Type a message and it fills the screen: welcome signs, timers, Wi-Fi passwords and more. No app, no account, free.',
   },
   editor: {
     path: '/editor',

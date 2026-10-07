@@ -48,7 +48,7 @@ const blockInfo = () =>
 await page.goto(BASE + '/');
 await settle();
 check('home renders', (await page.locator('.hero h1').count()) === 1);
-check('home title', (await page.title()) === 'BIGWORDS.PAGE: Big words for any screen', await page.title());
+check('home title', (await page.title()) === 'BIGWORDS.PAGE: Turn any screen into a sign', await page.title());
 await shot('home');
 
 // Viewer: plain text fits
@@ -304,7 +304,7 @@ check('prerendered docs styled', (await noJsPage.evaluate(() => getComputedStyle
 await noJsPage.goto(BASE + '/nope');
 check('404 page prerendered and styled', (await noJsPage.locator('.docs h1').textContent()) === 'Page not found' && (await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.docs')).maxWidth)) === '860px');
 await noJsPage.goto(BASE + '/');
-check('home prerendered without JS', (await noJsPage.locator('.hero h1').count()) === 1 && (await noJsPage.locator('.example').count()) === 8);
+check('home prerendered without JS', (await noJsPage.locator('.hero h1').count()) === 1 && (await noJsPage.locator('.example').count()) === 12 && (await noJsPage.locator('.example:visible').count()) === 8);
 check('prerendered home styled', (await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.home')).maxWidth)) === '1080px');
 await noJs.close();
 

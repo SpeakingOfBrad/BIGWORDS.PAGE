@@ -312,6 +312,26 @@ body.page-site {
   gap: 8px;
   padding: 0 12px 12px;
 }
+/* More use cases: a native <details>, so it opens without JavaScript. */
+.more-examples {
+  margin-top: 16px;
+}
+.more-examples > summary {
+  list-style: none;
+  display: flex;
+  width: fit-content;
+  margin: 0 auto;
+}
+.more-examples > summary::-webkit-details-marker {
+  display: none;
+}
+.more-examples[open] > summary {
+  margin-bottom: 16px;
+}
+.more-examples[open] .when-closed,
+.more-examples:not([open]) .when-open {
+  display: none;
+}
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -349,6 +369,15 @@ body.page-site {
   }
   .home {
     padding-top: 28px;
+  }
+}
+
+/* Phones: one use case card per row, narrower than the screen, so a card
+   doesn't take up a whole screenful. */
+@media (max-width: 540px) {
+  .examples {
+    grid-template-columns: minmax(0, 75%);
+    justify-content: center;
   }
 }
 

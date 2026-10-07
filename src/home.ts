@@ -14,7 +14,9 @@ export function mountHome(app: HTMLElement): { destroy(): void } {
   app.replaceChildren(siteHeader('home'), page.content);
 
   const demo = app.querySelector('.demo-frame')!;
-  const fragments = examples(location.origin).map((ex) => ex.fragment);
+  // Cards are in the same order as examples(): the ones shown, then the ones behind More.
+  const all = examples();
+  const fragments = [...all.filter((ex) => !ex.more), ...all.filter((ex) => ex.more)].map((ex) => ex.fragment);
   const thumbs = [...app.querySelectorAll('.example .thumb')];
 
   // Previews run only while on screen, so their timers, refits and fonts cost
