@@ -69,12 +69,6 @@ All optional. Set them as environment variables for `npm run build`, or as build
 | `NOINDEX` | `1` adds `noindex` to every page, makes `robots.txt` disallow everything and drops the sitemap. For staging copies and private instances. |
 | `OPERATOR_DOCS` | Path to a Markdown file appended to `/docs`, for notes about your instance, such as who runs it and how to report abuse. Relative to the repository root. |
 
-### SEO
-
-The build writes one HTML file per page (`index.html`, `editor.html`, `docs.html`), each with its own title, description and Open Graph tags. Page titles and descriptions live in [`src/pages.ts`](src/pages.ts), which the runtime also uses for the tab title. `index.html` and `docs.html` contain the prerendered home page and reference, so they read without JavaScript. `index.html` also serves every display (`/#…`), so a small inline script in its `<head>` hides the home page when the URL has a fragment, before anything is drawn; its hash is in the Caddyfile's CSP, and a unit test checks that they match. The build also writes `robots.txt` and a `noindex` `404.html` that hosts serve with status 404 for unknown paths, so typos and stale links aren't indexed as copies of the home page. `npm run preview` does the same.
-
-The social card `public/og.png` and `public/apple-touch-icon.png` are rendered with the real viewer by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts or the favicon.
-
 ## Development
 
 Requires Node 22.12+. CI and the Docker build use the LTS release in [`.node-version`](.node-version), currently 24.
@@ -91,6 +85,8 @@ npm run clipcheck  # checks that no glyph ink is clipped at the text area edges
 ```
 
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the unit tests, build and smoke test on every push to `main` and every pull request. Clipcheck runs too, but its result doesn't fail the build.
+
+The social card `public/og.png` and `public/apple-touch-icon.png` are rendered with the real viewer by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts or the favicon.
 
 Project layout:
 
