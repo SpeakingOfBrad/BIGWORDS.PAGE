@@ -410,8 +410,15 @@ The editor shows a live preview that renders exactly what the viewer shows, plus
 
 - The address bar always mirrors the current state, without filling your history.
 - Editing the fragment in the address bar updates the controls.
-- **Copy URL** copies the viewer URL (the same fragment without `/editor`). **Open viewer** opens it in a new tab. The QR button next to the URL shows it as a QR code, so a phone or tablet can scan it to open the display.
+- The URL field below the preview is editable too: paste a link (or just its fragment) and press Enter to load it. In the installed app, which has no address bar, that's how to edit an existing link.
+- **Copy URL** copies the viewer URL (the same fragment without `/editor`). **Open viewer** shows it in the same tab, and Back returns to the editor; the icon next to it opens it in a new tab instead. The QR button next to the URL shows it as a QR code, so a phone or tablet can scan it to open the display.
 - Parameters left at their defaults are dropped from the URL to keep it short.
+
+## Install and offline
+
+BIGWORDS.PAGE can be installed as an app from the browser: **Install** in Chrome or Edge, or **Share → Add to Home Screen** on iPhone and iPad. The app opens on the editor, fullscreen where the device allows it.
+
+After the first visit, the site keeps a copy of itself, so displays, the editor and these docs work without a connection, whether installed or in a browser tab. Images from other sites (`img`) only show while online. When you're online, pages always load the latest version. Browsers can clear the copy for a site you haven't used in a while, especially in a tab; an installed app keeps it longer.
 
 ## Privacy
 

@@ -297,9 +297,25 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
       imgWarning.hidden = true;
     },
   });
-  const urlField = h('input', { class: 'url-field', type: 'text', readonly: true, 'aria-label': 'Viewer URL' });
+  // Editable, for pasting or fixing a link: an installed app has no address
+  // bar. Enter or leaving the field loads it into the editor.
+  const urlField = h('input', {
+    class: 'url-field',
+    type: 'text',
+    inputmode: 'url',
+    enterkeyhint: 'go',
+    autocapitalize: 'off',
+    autocorrect: 'off',
+    spellcheck: 'false',
+    'aria-label': 'Viewer URL',
+  });
   const urlCount = h('span', { class: 'url-count' });
-  const openLink = h('a', { class: 'btn', target: '_blank', rel: 'noopener', 'aria-label': 'Open viewer (opens in a new tab)' }, 'Open viewer', newTabIcon());
+  // Open viewer shows the display in this tab, so an installed app stays in
+  // its own window, and Back returns to the editor. The icon next to it opens
+  // the display in a new tab.
+  const openLink = h('a', {}, 'Open viewer');
+  const openTabLink = h('a', { target: '_blank', rel: 'noopener', 'aria-label': 'Open viewer in a new tab', title: 'Open viewer in a new tab' }, newTabIcon());
+  const openViewer = h('span', { class: 'btn btn-split' }, openLink, openTabLink);
   const qrBtn = h('button', { class: 'btn btn-icon', type: 'button', 'aria-haspopup': 'dialog', 'aria-label': 'Show QR code', title: 'Show QR code' }, qrIcon());
   const copyBtn = h('button', { class: 'btn btn-primary', type: 'button' }, 'Copy URL');
   const urlAdvice = h('p', { class: 'advisory', hidden: true });
@@ -993,6 +1009,13 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
       // Rate-limited; the next edit writes the URL again.
     }
   };
+  // Leaving for the viewer: write the editor's URL now, so Back returns to
+  // the latest edits.
+  openLink.addEventListener('click', () => {
+    if (!urlTimer) return;
+    clearTimeout(urlTimer);
+    writeUrl();
+  });
   function commit() {
     const frag = fragment();
     urlTimer ||= window.setTimeout(writeUrl, 150);
@@ -1000,6 +1023,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     const viewer = viewerUrl();
     urlField.value = viewer;
     openLink.href = `/#${frag}`;
+    openTabLink.href = openLink.href;
     const n = viewer.length;
     urlCount.textContent = `${n.toLocaleString()} chars`;
     urlCount.className = 'url-count' + (n > URL_LIMIT ? ' over' : n >= URL_WARN ? ' warn' : '');
@@ -1011,12 +1035,29 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     updateAdvice();
   }
 
-  const onHashChange = () => {
-    state = loadState(location.hash);
+  const load = (hash: string) => {
+    state = loadState(hash);
     syncAll();
     renderSlides();
     commit();
   };
+  const onHashChange = () => load(location.hash);
+  // A pasted link, or just its fragment. Without a # it's a link to the home
+  // page, which opens the starter message like the editor does.
+  urlField.addEventListener('change', () => {
+    const value = urlField.value.trim();
+    const i = value.indexOf('#');
+    if (i >= 0) load(value.slice(i));
+    else if (/^[a-z]+:\/\//i.test(value)) load('');
+    else load(`#${value}`);
+  });
+  urlField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') urlField.blur();
+    else if (e.key === 'Escape') {
+      urlField.value = viewerUrl();
+      urlField.blur();
+    }
+  });
   window.addEventListener('hashchange', onHashChange);
   const unlockPreviewHeight = lockPreviewHeight();
   const stopKeepingFieldsVisible = keepFocusedFieldVisible();
@@ -1026,7 +1067,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     h(
       'main',
       { class: 'editor' },
-      h('section', { class: 'editor-preview', 'aria-label': 'Preview' }, h('div', { class: 'preview-frame' }, previewStage), h('div', { class: 'preview-bar' }, urlField, qrBtn, urlCount, openLink, copyBtn)),
+      h('section', { class: 'editor-preview', 'aria-label': 'Preview' }, h('div', { class: 'preview-frame' }, previewStage), h('div', { class: 'preview-bar' }, urlField, qrBtn, urlCount, openViewer, copyBtn)),
       controls,
     ),
     qrDialog,

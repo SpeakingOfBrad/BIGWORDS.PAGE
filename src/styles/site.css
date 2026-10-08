@@ -136,6 +136,30 @@ body.page-site {
   filter: brightness(1.05);
   border-color: var(--accent-edge);
 }
+/* Two links in one button, split by a line. */
+.btn-split {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+.btn-split > a {
+  display: inline-flex;
+  align-items: center;
+  align-self: stretch;
+  padding: 9px 10px 9px 16px;
+  color: inherit;
+  text-decoration: none;
+}
+.btn-split > a + a {
+  padding: 9px 15px 9px 12px;
+  border-left: 1px solid var(--line);
+}
+.btn-split > a:hover {
+  background: var(--bg-3);
+}
+.btn-split > a:focus-visible {
+  outline-offset: -3px;
+}
 .btn-sm {
   padding: 4px 10px;
   font-size: 13px;

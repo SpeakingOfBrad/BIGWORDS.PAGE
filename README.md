@@ -86,7 +86,7 @@ npm run clipcheck  # checks that no glyph ink is clipped at the text area edges
 
 GitHub Actions ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the unit tests, build and smoke test on every push to `main` and every pull request. Clipcheck runs too, but its result doesn't fail the build.
 
-The social card `public/og.png` and `public/apple-touch-icon.png` are rendered with the real viewer by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts or the favicon.
+The social card `public/og.png`, the app icons (`public/apple-touch-icon.png`, `public/icon-*.png`) and the install screenshots (`public/screenshots/`) are rendered by `npm run og` (with `npm run preview` running) and committed. Re-run it after changing the fonts, the favicon or the editor's look. The editor screenshots show `SITE_URL` in the URL field, or `example.com` without it.
 
 Project layout:
 

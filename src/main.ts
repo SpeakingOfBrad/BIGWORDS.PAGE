@@ -66,3 +66,25 @@ async function render(): Promise<void> {
 window.addEventListener('hashchange', () => void render());
 window.addEventListener('popstate', () => void render());
 void render();
+
+// Code loaded on demand (a page, the QR encoder) can be missing when this page
+// was loaded before a deploy that renamed its files. Reload to get the current
+// version, at most once a minute, so a file that's missing for another reason
+// (offline, with no saved copy) doesn't reload the page over and over.
+const RELOADED_AT = 'bigwords-reloaded-at';
+addEventListener('vite:preloadError', (event) => {
+  try {
+    if (Date.now() - Number(sessionStorage.getItem(RELOADED_AT)) < 60_000) return;
+    sessionStorage.setItem(RELOADED_AT, String(Date.now()));
+  } catch {
+    return;
+  }
+  event.preventDefault();
+  location.reload();
+});
+
+// Keeps a copy of the site for offline use (src/sw.js). Not in development,
+// where it would serve stale files.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  addEventListener('load', () => void navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}

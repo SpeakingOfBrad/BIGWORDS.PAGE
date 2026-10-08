@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join, relative, resolve } from 'node:path';
 import { Marked } from 'marked';
 import type { Plugin } from 'vite';
 import fontManifest from './src/render/font-manifest.json';
@@ -10,6 +10,7 @@ import { NOT_FOUND, PAGES, SITE_NAME, type PageMeta } from './src/pages.ts';
 const VIRTUAL_ID = 'virtual:docs';
 const RESOLVED_ID = '\0' + VIRTUAL_ID;
 const DOCS_PATH = resolve(import.meta.dirname, 'docs/REFERENCE.md');
+const SW_PATH = resolve(import.meta.dirname, 'src/sw.js');
 
 /**
  * Optional Markdown appended to the reference, for notes about one particular
@@ -233,6 +234,46 @@ function notFoundPage(template: string, cssLinks: string): string {
   );
 }
 
+/** The pages the service worker caches, by URL, and the files they're served from. */
+const SW_PAGES: Record<string, string> = { '/': 'index.html', '/editor': 'editor.html', '/docs': 'docs.html' };
+/** Files at the top of the build that the service worker leaves out. */
+const SW_SKIP = new Set(['og.png', 'robots.txt', 'sitemap.xml', '_headers', 'sw.js']);
+
+/**
+ * Writes sw.js (from src/sw.js) with the list of files to cache for offline
+ * use: the pages, the build's assets, the fonts and the top-level icons. The
+ * version is a hash of their contents, so any change to the site replaces the
+ * cache and an unchanged build keeps it.
+ */
+function writeServiceWorker(out: string): void {
+  const files: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else files.push(relative(out, path).split('\\').join('/'));
+    }
+  };
+  walk(out);
+  const cached = files
+    .filter((f) => {
+      if (f.startsWith('assets/')) return true;
+      if (f.startsWith('fonts/')) return f.endsWith('.woff2');
+      return !f.includes('/') && !f.endsWith('.html') && !SW_SKIP.has(f);
+    })
+    .sort();
+  for (const file of Object.values(SW_PAGES)) {
+    if (!files.includes(file)) throw new Error(`bigwords-pages: ${file} missing from the build`);
+  }
+
+  const template = readFileSync(SW_PATH, 'utf8');
+  const hash = createHash('sha256').update(template);
+  for (const file of [...Object.values(SW_PAGES), ...cached]) hash.update(file).update(readFileSync(join(out, file)));
+  const version = hash.digest('hex').slice(0, 16);
+  const urls = [...Object.keys(SW_PAGES), ...cached.map((f) => `/${f}`)];
+  writeFileSync(join(out, 'sw.js'), `const VERSION = ${JSON.stringify(version)};\nconst PRECACHE = ${JSON.stringify(urls, null, 2)};\n\n${template}`);
+}
+
 /**
  * Renders docs/REFERENCE.md (plus OPERATOR_DOCS, if set) to HTML at build
  * time and exposes it as `virtual:docs`, so the /docs route and the README
@@ -241,10 +282,12 @@ function notFoundPage(template: string, cssLinks: string): string {
  * At build time it also writes one HTML file per page (index.html,
  * editor.html, docs.html) with that page's metadata, prerenders the home page
  * and the docs so they're readable without JavaScript, and writes 404.html,
- * robots.txt and, when SITE_URL is set, sitemap.xml.
+ * robots.txt and, when SITE_URL is set, sitemap.xml. Last, it writes the
+ * service worker, sw.js.
  */
 export default function docsPlugin(): Plugin[] {
   let command: 'build' | 'serve' = 'serve';
+  let outDir: string | undefined;
   return [
     {
       name: 'bigwords-docs',
@@ -291,6 +334,7 @@ export default function docsPlugin(): Plugin[] {
       apply: 'build',
       writeBundle(options, bundle) {
         const out = options.dir!;
+        outDir = out;
         const site = siteUrl();
         const noindex = isNoindex();
         const index = bundle['index.html'];
@@ -336,6 +380,10 @@ export default function docsPlugin(): Plugin[] {
           resolve(out, 'sitemap.xml'),
           `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`,
         );
+      },
+      // After writeBundle, once the public files are in place too.
+      closeBundle() {
+        if (outDir) writeServiceWorker(outDir);
       },
     },
   ];

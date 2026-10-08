@@ -1,0 +1,25 @@
+{
+  "id": "/",
+  "name": "BIGWORDS.PAGE",
+  "short_name": "BIGWORDS",
+  "lang": "en",
+  "description": "Turn a phone, tablet or TV into a sign. Type a message and it fills the screen.",
+  "start_url": "/editor",
+  "scope": "/",
+  "display": "fullscreen",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "screenshots": [
+    { "src": "/screenshots/wide-editor.png", "sizes": "2560x1600", "type": "image/png", "form_factor": "wide", "label": "The editor, with a live preview of a welcome sign" },
+    { "src": "/screenshots/wide-gate.png", "sizes": "2560x1600", "type": "image/png", "form_factor": "wide", "label": "A gate sign: Gate 12, boarding now" },
+    { "src": "/screenshots/wide-menu.png", "sizes": "2560x1600", "type": "image/png", "form_factor": "wide", "label": "A sign with a QR code that opens a menu" },
+    { "src": "/screenshots/narrow-editor.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "The editor on a phone" },
+    { "src": "/screenshots/narrow-quiz.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "A quiz timer counting down" },
+    { "src": "/screenshots/narrow-menu.png", "sizes": "780x1688", "type": "image/png", "form_factor": "narrow", "label": "A sign with a QR code that opens a menu" }
+  ]
+}

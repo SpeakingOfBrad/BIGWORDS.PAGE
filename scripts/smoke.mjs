@@ -198,6 +198,29 @@ check('editor title', (await page.title()) === 'Editor · BIGWORDS.PAGE', await 
 await page.getByRole('textbox', { name: 'Message', exact: true }).fill('Edited & done');
 await settle();
 check('editor updates URL', page.url() === BASE + '/editor#Edited%20%26%20done', page.url());
+// Open viewer stays in the tab and Back returns to the edits; the icon next
+// to it opens a new tab.
+check('new-tab icon opens a new tab', (await page.getByRole('link', { name: 'Open viewer in a new tab' }).getAttribute('target')) === '_blank');
+await page.getByRole('link', { name: 'Open viewer', exact: true }).click();
+await settle();
+check('Open viewer shows the display in the same tab', page.url() === BASE + '/#Edited%20%26%20done' && (await page.locator('.bw-block').textContent()) === 'Edited & done', page.url());
+await page.goBack();
+await settle();
+check('Back returns to the editor', (await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue()) === 'Edited & done', page.url());
+// The URL field takes a pasted link (an installed app has no address bar).
+const urlBox = page.getByRole('textbox', { name: 'Viewer URL' });
+await urlBox.fill('https://example.com/#Pasted%20link&bg=ff0000');
+await urlBox.press('Enter');
+await settle();
+check(
+  'pasting a link into the URL field loads it',
+  (await page.getByRole('textbox', { name: 'Message', exact: true }).inputValue()) === 'Pasted link' && page.url() === BASE + '/editor#Pasted%20link&bg=ff0000',
+  page.url(),
+);
+await urlBox.fill('Edited%20%26%20done');
+await urlBox.press('Enter');
+await settle();
+check('a bare fragment works too', (await urlBox.inputValue()) === BASE + '/#Edited%20%26%20done', await urlBox.inputValue());
 await page.locator('.editor-controls select').first().selectOption('pulse').catch(() => null);
 await page.locator('text=Copy URL').click();
 await settle();
@@ -331,6 +354,80 @@ await slowPage.goto(BASE + '/');
 check('home page shows before JS', await slowPage.locator('.hero').isVisible());
 check('CSP allows the display guard', cspErrors.length === 0, cspErrors.join(' | '));
 await slow.close();
+
+// Install and offline: the manifest, then every page from the service
+// worker's cache with the network off.
+const manifest = await (await fetch(BASE + '/manifest.webmanifest')).json();
+check('manifest opens the editor fullscreen', manifest.start_url === '/editor' && manifest.display === 'fullscreen', `${manifest.start_url} ${manifest.display}`);
+// The images the manifest lists exist at the sizes it gives (PNG width and
+// height are bytes 16-23), and the screenshots meet Chrome's rules for the
+// richer install dialog.
+for (const img of [...manifest.icons, ...manifest.screenshots]) {
+  const res = await fetch(BASE + img.src);
+  const png = Buffer.from(await res.arrayBuffer());
+  const size = res.ok && img.type === 'image/png' ? `${png.readUInt32BE(16)}x${png.readUInt32BE(20)}` : String(res.status);
+  check(`manifest image ${img.src}`, img.sizes === 'any' || size === img.sizes, size);
+}
+for (const form of ['wide', 'narrow']) {
+  const sizes = manifest.screenshots.filter((s) => s.form_factor === form).map((s) => s.sizes.split('x').map(Number));
+  const ok = sizes.length > 0 && sizes.every(([w, h]) => Math.min(w, h) >= 320 && Math.max(w, h) <= 3840 && Math.max(w, h) / Math.min(w, h) <= 2.3 && w * sizes[0][1] === h * sizes[0][0]);
+  check(`${form} screenshots meet Chrome's rules`, ok, JSON.stringify(sizes));
+}
+// Chrome's own verdict on the manifest and the install requirements.
+const cdp = await ctx.newCDPSession(page);
+await page.goto(BASE + '/');
+const { errors: manifestErrors } = await cdp.send('Page.getAppManifest');
+check('manifest has no errors', manifestErrors.length === 0, JSON.stringify(manifestErrors));
+// Playwright's contexts are incognito windows, where Chrome never installs.
+const installabilityErrors = (await cdp.send('Page.getInstallabilityErrors')).installabilityErrors.filter((e) => e.errorId !== 'in-incognito');
+check('site is installable', installabilityErrors.length === 0, JSON.stringify(installabilityErrors));
+await cdp.detach();
+const off = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+const offPage = await off.newPage();
+offPage.on('pageerror', (e) => errors.push(String(e)));
+// Requests that fail while offline, for the details of a failed check.
+const offFailed = [];
+offPage.on('requestfailed', (r) => offFailed.push(new URL(r.url()).pathname));
+const missing = () => (offFailed.length ? `failed: ${[...new Set(offFailed)].join(', ')}` : '');
+// The docs page is the first visit, so the fonts the home page's examples use
+// haven't loaded: offline, they must come from the worker's cache.
+await offPage.goto(BASE + '/docs');
+check('service worker installs', await offPage.evaluate(() => navigator.serviceWorker.ready.then((r) => !!r.active)));
+await off.setOffline(true);
+// Each page is a full load (from about:blank), not a change of the # alone,
+// so every file it needs comes from the cache.
+const offline = async (path) => {
+  await offPage.goto('about:blank');
+  await offPage.goto(BASE + path);
+  await offPage.evaluate(() => document.fonts.ready);
+  await offPage.waitForTimeout(400);
+};
+await offline('/#Offline&font=6');
+check('offline display renders', (await offPage.locator('.bw-block').textContent()) === 'Offline', missing());
+check(
+  'offline display loads its font',
+  await offPage.evaluate(() => [...document.fonts].some((f) => f.family.includes('caveat') && f.status === 'loaded')),
+  missing(),
+);
+await offline('/editor');
+check('offline editor renders', (await offPage.getByRole('textbox', { name: 'Message', exact: true }).count()) === 1, missing());
+await offline('/docs');
+check('offline docs render', (await offPage.locator('.docs h2').count()) > 8, missing());
+await offline('/nope');
+check('offline unknown path shows not found', (await offPage.locator('.docs h1').textContent()) === 'Page not found', missing());
+await off.close();
+
+// A file loaded on demand that's gone (renamed by a later deploy) reloads
+// the page once to get the current version, and never loops.
+const stale = await browser.newContext({ serviceWorkers: 'block' });
+await stale.route(/\/assets\/qr-[^/]*\.js$/, (route) => route.abort());
+const stalePage = await stale.newPage();
+let loads = 0;
+stalePage.on('load', () => loads++);
+await stalePage.goto(BASE + '/#Scan&qr=https://example.com');
+await stalePage.waitForTimeout(2000);
+check('missing on-demand file reloads the page once', loads === 2, `${loads} loads`);
+await stale.close();
 
 check('no console errors', errors.length === 0, errors.join(' | '));
 await browser.close();
