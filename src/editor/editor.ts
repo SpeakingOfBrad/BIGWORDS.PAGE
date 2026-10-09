@@ -8,15 +8,19 @@ import { parseFragment, serializeFragment, type State } from '../state/fragment'
 import {
   ANIMATIONS,
   CD_FORMATS,
+  FAST_INTERVAL,
   IMG_POSITIONS,
+  MIN_INTERVAL,
   PARAM_ORDER,
   QR_POSITIONS,
   QR_SIZE_MAX,
   QR_SIZE_MIN,
   SPEEDS,
+  TRANSITIONS,
   countdownSource,
   formatPad,
   formatTimer,
+  parseInterval,
   parsePad,
   parseRatio,
   parseTimer,
@@ -43,6 +47,13 @@ const ANIM_LABELS: Record<string, string> = {
   typewriter: 'Typewriter',
   fadein: 'Fade in',
   rainbow: 'Rainbow',
+};
+const TRANS_LABELS: Record<string, string> = {
+  slide: 'Slide',
+  none: 'None (cut)',
+  fade: 'Fade',
+  up: 'Slide up',
+  zoom: 'Zoom',
 };
 const QR_LABELS: Record<string, string> = { tl: 'Top left', tr: 'Top right', bl: 'Bottom left', br: 'Bottom right', below: 'Below text' };
 const QR_KIND_LABELS: Record<string, string> = { url: 'Link', wifi: 'Wi-Fi network', tel: 'Phone call', sms: 'Text/SMS', email: 'Email', geo: 'Location', text: 'Plain text' };
@@ -400,8 +411,11 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   const slideList = h('ol', { class: 'slides', 'aria-label': 'Slides' });
   const addSlide = h('button', { class: 'btn btn-sm', type: 'button' }, '+ Add slide');
   const insertCd = h('button', { class: 'btn btn-sm', type: 'button', title: 'Insert {countdown} at the cursor' }, '+ {countdown}');
-  const intervalInput = h('input', { type: 'number', min: '1', max: '86400', step: '1', id: uid('interval') });
+  const intervalInput = h('input', { type: 'number', min: String(MIN_INTERVAL), max: '86400', step: 'any', id: uid('interval') });
   const intervalRow = row(label('Seconds per slide', intervalInput.id), intervalInput);
+  const transSel = options(h('select', { id: uid('trans') }), TRANSITIONS, TRANS_LABELS);
+  const transRow = row(label('Transition', transSel.id), transSel);
+  const slideAdvice = h('p', { class: 'advisory', hidden: true });
 
   const setSlides = (slides: string[], focusIndex?: number) => {
     state.message = slides.join('||');
@@ -420,6 +434,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   function renderSlides() {
     const slides = splitRawSlides(state.message);
     intervalRow.hidden = slides.length < 2;
+    transRow.hidden = slides.length < 2;
     slideList.hidden = slides.length < 2;
     slideList.replaceChildren(
       ...slides.map((src, i) => {
@@ -456,9 +471,27 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     textarea.dispatchEvent(new Event('input'));
     textarea.focus();
   });
-  intervalInput.addEventListener('input', () => set('interval', /^\d+$/.test(intervalInput.value) && +intervalInput.value > 0 ? intervalInput.value : ''));
-  onSync(() => {
+  intervalInput.addEventListener('input', () => set('interval', parseInterval(intervalInput.value) === null ? '' : intervalInput.value.trim()));
+  // On Enter or leaving the field, show the value the display uses, such as
+  // 0.2 for 0.05, or the default for an invalid one.
+  intervalInput.addEventListener('change', () => {
+    const n = parseInterval(intervalInput.value);
+    if (n !== null) set('interval', String(n));
     intervalInput.value = String(resolveSettings(state).interval);
+  });
+  transSel.addEventListener('change', () => set('trans', transSel.value));
+  const updateSlideAdvice = () => {
+    const s = resolveSettings(state);
+    const fast = splitRawSlides(state.message).length > 1 && s.interval <= FAST_INTERVAL;
+    slideAdvice.textContent = fast
+      ? 'Photosensitivity warning: slides changing this quickly can trigger seizures in people with photosensitive epilepsy, especially with large, high-contrast text. Consider a longer time per slide.'
+      : '';
+    slideAdvice.hidden = !fast;
+  };
+  onSync(() => {
+    const s = resolveSettings(state);
+    if (document.activeElement !== intervalInput) intervalInput.value = String(s.interval);
+    transSel.value = s.trans;
   });
 
   const cheats: [string, string][] = [
@@ -480,6 +513,8 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
     row(addSlide, insertCd),
     slideList,
     intervalRow,
+    transRow,
+    slideAdvice,
     h(
       'details',
       { class: 'mini-details' },
@@ -557,41 +592,57 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
   // --- Size
   const sizeGroup = group('Size');
   const autoSize = h('input', { type: 'checkbox' });
-  const sizeRow = (key: 'size' | 'size-min' | 'size-max', name: string, def: number) => {
-    const num = h('input', { type: 'number', min: '0', step: 'any', id: uid(key), placeholder: key === 'size' ? String(def) : 'none' });
+  const limitRows: HTMLElement[] = [];
+  const sizeRow = (key: 'size' | 'size-min' | 'size-max', name: string) => {
+    const num = h('input', { type: 'number', min: '0', step: 'any', id: uid(key), placeholder: key === 'size' ? 'auto' : 'none' });
     const unit = options(h('select', { 'aria-label': `${name} unit` }), ['px', 'vh', 'vw']);
+    // Empty or 0 means unset. For the fixed size, that is auto-fit.
     const write = () => {
       const n = parseFloat(num.value);
-      if (!(n > 0)) {
-        set(key, key === 'size' ? `${def}${unit.value === 'px' ? '' : unit.value}` : '');
-        return;
-      }
-      set(key, formatSize({ value: n, unit: unit.value as SizeUnit }));
+      set(key, n > 0 ? formatSize({ value: n, unit: unit.value as SizeUnit }) : '');
+      if (key === 'size') showAuto();
     };
-    num.addEventListener('input', write);
+    // While typing, the field keeps what was typed, even an unset 0. Enter or
+    // leaving the field shows the value in use: empty, and for the fixed
+    // size disabled, once it is unset.
+    let typing = false;
+    num.addEventListener('input', () => {
+      typing = true;
+      write();
+    });
     unit.addEventListener('change', write);
+    num.addEventListener('change', () => {
+      typing = false;
+      syncAll();
+    });
     onSync(() => {
       const raw = get(key);
       const parsed = raw.toLowerCase() === 'auto' ? null : parseSize(raw);
-      if (document.activeElement !== num) num.value = parsed ? String(parsed.value) : '';
+      if (!typing) num.value = parsed ? String(parsed.value) : '';
       unit.value = parsed?.unit ?? unit.value;
-      if (key === 'size') num.disabled = unit.disabled = !parsed;
+      if (key === 'size') num.disabled = unit.disabled = !parsed && !typing;
     });
-    return row(label(name, num.id), num, unit);
+    const r = row(label(name, num.id), num, unit);
+    if (key !== 'size') limitRows.push(r);
+    return r;
+  };
+  // The minimum and maximum only bound auto-fit; a fixed size is used as is.
+  const showAuto = () => {
+    const auto = resolveSettings(state).size === null;
+    autoSize.checked = auto;
+    limitRows.forEach((r) => r.querySelectorAll('input, select').forEach((c) => ((c as HTMLInputElement).disabled = !auto)));
   };
   autoSize.addEventListener('change', () => {
     set('size', autoSize.checked ? '' : '10vh');
     syncAll();
   });
-  onSync(() => {
-    autoSize.checked = resolveSettings(state).size === null;
-  });
+  onSync(showAuto);
   sizeGroup.append(
     row(h('label', { class: 'check' }, autoSize, 'Auto-fit to the screen')),
-    sizeRow('size', 'Fixed size', 10),
-    sizeRow('size-min', 'Minimum', 0),
-    sizeRow('size-max', 'Maximum', 0),
-    h('p', { class: 'hint' }, 'Below the minimum, text stops shrinking and scrolls instead. vh and vw are percent of screen height and width.'),
+    sizeRow('size', 'Fixed size'),
+    sizeRow('size-min', 'Minimum'),
+    sizeRow('size-max', 'Maximum'),
+    h('p', { class: 'hint' }, 'Minimum and maximum apply to auto-fit. Text never shrinks below the minimum, even if it runs off the screen. vh and vw are percent of screen height and width.'),
   );
 
   // --- Padding
@@ -1033,6 +1084,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
         ? `This link is ${n.toLocaleString()} characters. Some messaging apps, email clients and proxies cut links off after about 2,000.`
         : `This link is getting long (${n.toLocaleString()} characters). Links over about 2,000 may be cut off by some apps.`;
     updateAdvice();
+    updateSlideAdvice();
   }
 
   const load = (hash: string) => {

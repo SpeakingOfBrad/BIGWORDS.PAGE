@@ -73,6 +73,35 @@ describe('params', () => {
     expect(resolveSettings({ message: '', params: { refresh: '30', interval: '86400' } })).toMatchObject({ refresh: 30, interval: 86400 });
   });
 
+  it('reads decimal slide intervals within limits', () => {
+    const interval = (v: string) => resolveSettings({ message: '', params: { interval: v } }).interval;
+    expect(interval('1.5')).toBe(1.5);
+    expect(interval('0.25')).toBe(0.25);
+    expect(interval('.5')).toBe(0.5);
+    expect(interval('2.')).toBe(2);
+    expect(interval('0.333')).toBe(0.33);
+    expect(interval('0.05')).toBe(0.2);
+    expect(interval('0.2')).toBe(0.2);
+    expect(interval('0')).toBe(5);
+    expect(interval('1e3')).toBe(5);
+    expect(interval('1,5')).toBe(5);
+  });
+
+  it('treats a zero size as unset', () => {
+    const s = resolveSettings({ message: '', params: { size: '0', 'size-min': '0vh', 'size-max': '0' } });
+    expect(s.size).toBeNull();
+    expect(s.sizeMin).toBeNull();
+    expect(s.sizeMax).toBeNull();
+  });
+
+  it('reads slide transitions', () => {
+    const trans = (v?: string) => resolveSettings({ message: '', params: v === undefined ? {} : { trans: v } }).trans;
+    expect(trans()).toBe('slide');
+    expect(trans('FADE')).toBe('fade');
+    expect(trans('none')).toBe('none');
+    expect(trans('spin')).toBe('slide');
+  });
+
   it('parses padding shorthand', () => {
     expect(parsePad('5')).toEqual([5, 5, 5, 5]);
     expect(parsePad('5,10')).toEqual([5, 10, 5, 10]);

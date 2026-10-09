@@ -1,4 +1,4 @@
-import type { Settings } from '../state/params';
+import type { Settings, Transition } from '../state/params';
 import { sizeToPx } from '../state/size';
 import { formatCountdown, everySecond } from './countdown';
 import { ensureFont, fontReady, fontStack } from './fonts';
@@ -20,9 +20,38 @@ const BASE_DURATION: Record<string, number> = {
   fadein: 1.5,
   rainbow: 6,
 };
-const SLIDE_TRANSITION_MS = 600;
 const CODE_FONT = 5; // JetBrains Mono, loaded only when a message has `code`
 const FONT_WAIT_MS = 1500; // longest the text stays hidden waiting for its font
+const SLIDE_TRANSITION_MS = 600;
+/** Share of the interval a transition may take, so fast slides never overlap. */
+const TRANSITION_SHARE = 0.4;
+/** Shorter transitions than this are cut instead. */
+const MIN_TRANSITION_MS = 50;
+
+type Frames = [Keyframe[], Keyframe[]]; // incoming slide, outgoing slide
+
+const TRANSITION_FRAMES: Record<Exclude<Transition, 'none'>, Frames> = {
+  slide: [
+    [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }],
+    [{ transform: 'translateX(0)' }, { transform: 'translateX(-100%)' }],
+  ],
+  up: [
+    [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
+    [{ transform: 'translateY(0)' }, { transform: 'translateY(-100%)' }],
+  ],
+  fade: [
+    [{ opacity: 0 }, { opacity: 1 }],
+    [{ opacity: 1 }, { opacity: 0 }],
+  ],
+  zoom: [
+    [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'scale(1)' }],
+    [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.15)' }],
+  ],
+};
+
+function prefersReducedMotion(): boolean {
+  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 type FitMode = 'both' | 'height' | 'width';
 
@@ -508,19 +537,26 @@ export class Display {
     to.el.hidden = false;
     this.fit(to);
     this.startAnim(to);
-    const opts: KeyframeAnimationOptions = { duration: SLIDE_TRANSITION_MS, easing: 'ease-in-out' };
-    if (typeof to.el.animate === 'function') {
-      to.el.animate([{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }], opts);
-      const out = from.el.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-100%)' }], opts);
-      out.onfinish = () => {
-        if (this.views[this.current] !== from) {
-          from.el.hidden = true;
-          from.stopAnim?.();
-        }
-      };
-    } else {
+    const s = this.s!;
+    const duration = Math.min(SLIDE_TRANSITION_MS, s.interval * 1000 * TRANSITION_SHARE);
+    // Fading isn't movement, so it stands in for the moving transitions when
+    // the viewer's system asks for reduced motion.
+    const trans = s.trans !== 'none' && prefersReducedMotion() ? 'fade' : s.trans;
+    if (trans === 'none' || duration < MIN_TRANSITION_MS || typeof to.el.animate !== 'function') {
       from.el.hidden = true;
+      from.stopAnim?.();
+      return;
     }
+    const [inFrames, outFrames] = TRANSITION_FRAMES[trans];
+    const opts: KeyframeAnimationOptions = { duration, easing: 'ease-in-out' };
+    to.el.animate(inFrames, opts);
+    const out = from.el.animate(outFrames, opts);
+    out.onfinish = () => {
+      if (this.views[this.current] !== from) {
+        from.el.hidden = true;
+        from.stopAnim?.();
+      }
+    };
   }
 
   private visibleViews(): SlideView[] {
@@ -627,7 +663,6 @@ export class Display {
     const minPx = s.sizeMin ? sizeToPx(s.sizeMin, vw, vh) : 0;
     const maxPx = s.sizeMax ? sizeToPx(s.sizeMax, vw, vh) : Infinity;
     const mode = this.fitMode();
-    v.el.classList.remove('bw-locked');
     block.style.padding = inkOverhang(block)
       .map((n) => `${n.toFixed(3)}em`)
       .join(' ');
@@ -657,11 +692,9 @@ export class Display {
       // Leave room for animations that grow or move the text.
       if (s.anim === 'pulse') px *= 0.94;
       if (s.anim === 'shake' || s.anim === 'bounce') px *= 0.96;
-    }
-    if (px > maxPx) px = maxPx;
-    if (px < minPx) {
-      px = minPx;
-      if (!s.size && mode === 'both') v.el.classList.add('bw-locked');
+      // A fixed size is used as given; the limits only bound auto-fit.
+      if (px > maxPx) px = maxPx;
+      if (px < minPx) px = minPx;
     }
     block.style.fontSize = `${Math.max(1, px)}px`;
     if (mode !== 'both') this.setMarquee(v, W, H);

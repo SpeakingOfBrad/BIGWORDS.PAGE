@@ -72,9 +72,15 @@
 .bw-slide[hidden] {
   display: none;
 }
-.bw-slide.bw-locked {
-  overflow: auto;
-  scrollbar-width: thin;
+/* Center text that is bigger than the area, such as a long word at a fixed
+   size or held at size-min, so it spills evenly on every side. Auto margins
+   would pin it to the top left. */
+.bw-slide.bw-mode-both {
+  justify-content: center;
+  align-items: center;
+}
+.bw-slide.bw-mode-both > .bw-block {
+  margin: 0;
 }
 .bw-block {
   margin: auto;

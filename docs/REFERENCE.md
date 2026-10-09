@@ -73,8 +73,8 @@ Messaging apps and other tools that turn URLs into links usually stop the link b
 | `fg` | Text color | `auto`, or 6-digit hex without `#` (`ffffff`) | `auto` |
 | `font` | Font | `0`–`6`, see [Fonts](#fonts) | `0` |
 | `size` | Font size | `auto`, pixels (`48`), or with a unit (`5vh`, `8vw`) | `auto` |
-| `size-min` | Smallest auto size. Below it, text scrolls. | Pixels (`12`) or with a unit (`2vh`, `3vw`) | *(none)* |
-| `size-max` | Largest size | Pixels (`72`) or with a unit (`15vh`, `10vw`) | *(none)* |
+| `size-min` | Smallest auto size. Text that needs to be smaller runs off the screen. | Pixels (`12`) or with a unit (`2vh`, `3vw`) | *(none)* |
+| `size-max` | Largest auto size | Pixels (`72`) or with a unit (`15vh`, `10vw`) | *(none)* |
 | `pad` | Padding, in percent | `5`, `5,10` or `5,10,5,10`, see [Padding](#padding) | `5` |
 | `anim` | Animation | `none`, `pulse`, `flash`, `shake`, `bounce`, `scroll`, `crawl`, `typewriter`, `fadein`, `rainbow` | `none` |
 | `speed` | Animation speed | `slow`, `normal`, `fast` | `normal` |
@@ -89,7 +89,8 @@ Messaging apps and other tools that turn URLs into links usually stop the link b
 | `timer` | Countdown length, from when the page opens. Use `until` or `timer`, not both. | Seconds (`14400`), or `d`, `h`, `m`, `s` amounts (`4h`, `1h30m`) | *(none)* |
 | `cdfmt` | Countdown format | `label`, `colon` | `label` |
 | `zero` | What happens at zero | `freeze`, `hide`, or a replacement message, which can use formatting and line breaks like the main one | `freeze` |
-| `interval` | Seconds per slide | Whole number from 1 to 86400 (larger values count as 86400) | `5` |
+| `interval` | Seconds per slide | Number from 0.2 to 86400, to hundredths (`2`, `1.5`, `0.25`). Smaller values count as 0.2, larger ones as 86400. | `5` |
+| `trans` | Slide transition | `slide`, `none`, `fade`, `up`, `zoom`, see [Slides](#slides) | `slide` |
 | `wake` | Keep the screen awake | `on`, `off` | `on` |
 
 An invalid value (bad hex, unknown font, impossible date…) quietly falls back to that parameter's default. The viewer never shows an error.
@@ -173,8 +174,10 @@ With `size=auto` (the default), the text grows to the largest size at which the 
 | `auto` | Fit to the screen (`size` only) |
 
 - `size-max` caps the size, however much room there is.
-- `size-min` sets a floor. If the text would have to shrink below it, it stays at the minimum and scrolls.
+- `size-min` sets a floor. If the text would have to shrink below it, it stays at the minimum and runs off the edges of the screen, centered.
 - With neither, the size scales freely with the screen.
+- Both only apply with `size=auto`. A fixed `size` is used as given.
+- `0` counts as not set, so `size=0` is `auto`.
 
 Example: [`{origin}/#Big%20but%20not%20huge&size-max=12vh`]({origin}/#Big%20but%20not%20huge&size-max=12vh)
 
@@ -269,9 +272,23 @@ With `label`, units are dropped from the front once they reach zero: three hours
 
 ## Slides
 
-Separate slides with `||`. All slides share every setting; each is fitted on its own and they slide in from the right every `interval` seconds.
+Separate slides with `||`. All slides share every setting, and each is fitted on its own. A new slide comes in every `interval` seconds, using the transition set by `trans`:
+
+| `trans` | The next slide… |
+|---|---|
+| `slide` | Slides in from the right |
+| `none` | Replaces the last one at once |
+| `fade` | Fades in as the last one fades out |
+| `up` | Slides in from below |
+| `zoom` | Grows into place as the last one fades out |
 
 [`{origin}/#Welcome!||Doors%20open%20in%0A{countdown}||Enjoy%20the%20show&until=2027-01-01T19:00:00&interval=8`]({origin}/#Welcome!||Doors%20open%20in%0A{countdown}||Enjoy%20the%20show&until=2027-01-01T19:00:00&interval=8)
+
+[`{origin}/#9:00%20Welcome||10:30%20Workshops||12:30%20Lunch&interval=3&trans=up`]({origin}/#9:00%20Welcome||10:30%20Workshops||12:30%20Lunch&interval=3&trans=up)
+
+Transitions last 0.6 seconds, or less when slides change quickly, so a transition always finishes well before the next one starts. When the viewing device is set to reduce motion, `slide`, `up` and `zoom` fade instead.
+
+*Slides changing faster than about twice a second can affect people with photosensitive epilepsy.*
 
 The editor counts the URL's characters and warns as it nears about 2,000. Some messaging apps, email clients and proxies cut off longer links.
 
@@ -396,6 +413,16 @@ Any value that isn't one of the above, such as `qr=Table%2012`, goes in the code
 The image loads straight from its host, which is never told which page asked for it. Like any image on the web, the host does see the viewing device's IP address and browser, and with `refresh` it sees a request every time the page reloads. Some hosts refuse to serve images to other sites, so an image that opens fine in its own tab can still fail here. If an image fails, the viewer leaves it out and the editor shows a warning.
 
 `refresh=N` reloads the page every N seconds. It's only useful when the image URL points at something that changes, such as a webcam snapshot.
+
+## Tips
+
+- **Keep a slide up longer:** repeat it. `A||A||B` shows A for two intervals. With `trans=none` the repeat is seamless.
+- **Add a pause:** leave a slide empty. `A||||B` shows a blank screen between A and B.
+- **Keep every slide the same size:** auto-fit sizes each slide on its own, so a short slide comes out bigger than a long one. Set `size-max` to about the size the longest slide gets, and they all match.
+- **Show one word at a time:** give each word its own slide, with a short `interval` and `trans=none`. [`{origin}/#**You**%7C%7C**dropped**%7C%7C**your**%7C%7C**wallet**%7C%7C**wallet**&bg=000000&fg=ffffff&font=4&size-max=50vh&interval=0.2&trans=none`]({origin}/#**You**%7C%7C**dropped**%7C%7C**your**%7C%7C**wallet**%7C%7C**wallet**&bg=000000&fg=ffffff&font=4&size-max=50vh&interval=0.2&trans=none)
+- **Show commands and codes exactly as typed:** put them in backticks, so symbols like `*` and `_` aren't read as formatting. Without them, the stars in this command would vanish and `.jpg` would turn italic. [`{origin}/#%23%23%20Step%203%0A%60cp%20*.jpg%20*.png%20photos/%60`]({origin}/#%23%23%20Step%203%0A%60cp%20*.jpg%20*.png%20photos/%60)
+- **Open it on another screen:** in the editor, the QR button next to the URL shows the display's link as a QR code. Scan it with the tablet or phone that will show the display.
+- **Hide the browser:** use the browser's full screen mode (F11 on Windows and Linux, Control-Command-F on a Mac), or [install the app](#install-and-offline), which opens full screen where the device allows it.
 
 ## Viewer behavior
 

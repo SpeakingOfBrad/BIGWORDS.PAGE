@@ -6,12 +6,14 @@ export const SPEEDS = ['slow', 'normal', 'fast'] as const;
 export const QR_POSITIONS = ['tl', 'tr', 'bl', 'br', 'below'] as const;
 export const IMG_POSITIONS = ['bg', 'full', 'above', 'below'] as const;
 export const CD_FORMATS = ['label', 'colon'] as const;
+export const TRANSITIONS = ['slide', 'none', 'fade', 'up', 'zoom'] as const;
 
 export type Animation = (typeof ANIMATIONS)[number];
 export type Speed = (typeof SPEEDS)[number];
 export type QrPos = (typeof QR_POSITIONS)[number];
 export type ImgPos = (typeof IMG_POSITIONS)[number];
 export type CdFormat = (typeof CD_FORMATS)[number];
+export type Transition = (typeof TRANSITIONS)[number];
 export type ZeroBehavior = { kind: 'freeze' } | { kind: 'hide' } | { kind: 'message'; message: string };
 
 /** Fully validated display settings. Invalid input always falls back to the default. */
@@ -37,7 +39,8 @@ export interface Settings {
   timer: number | null; // seconds, counted from page load
   cdfmt: CdFormat;
   zero: ZeroBehavior;
-  interval: number;
+  interval: number; // seconds, to hundredths
+  trans: Transition;
   wake: boolean;
 }
 
@@ -64,6 +67,7 @@ export const PARAM_DEFAULTS: Readonly<Record<string, string>> = {
   cdfmt: 'label',
   zero: 'freeze',
   interval: '5',
+  trans: 'slide',
   wake: 'on',
 };
 export const PARAM_ORDER = Object.keys(PARAM_DEFAULTS);
@@ -94,6 +98,20 @@ export const MAX_SECONDS = 86400;
 function seconds(v: string | undefined): number | null {
   const n = posInt(v);
   return n === null ? null : Math.min(n, MAX_SECONDS);
+}
+
+/** Shortest `interval`, in seconds. */
+export const MIN_INTERVAL = 0.2;
+/** At or below this `interval`, slides change twice a second or more: the editor warns. */
+export const FAST_INTERVAL = 0.5;
+
+/** Seconds per slide: a positive decimal, rounded to hundredths and kept within MIN_INTERVAL and MAX_SECONDS. */
+export function parseInterval(v: string | undefined): number | null {
+  const s = v?.trim() ?? '';
+  if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+  const n = parseFloat(s);
+  if (!(n > 0)) return null;
+  return Math.min(MAX_SECONDS, Math.max(MIN_INTERVAL, Math.round(n * 100) / 100));
 }
 
 export function parsePad(v: string | undefined): [number, number, number, number] | null {
@@ -245,7 +263,8 @@ export function resolveSettings(state: State): Settings {
     timer: source === 'timer' ? parseTimer(p.timer) : null,
     cdfmt: oneOf(CD_FORMATS, p.cdfmt, 'label'),
     zero,
-    interval: seconds(p.interval) ?? 5,
+    interval: parseInterval(p.interval) ?? 5,
+    trans: oneOf(TRANSITIONS, p.trans, 'slide'),
     wake: (p.wake?.trim().toLowerCase() ?? 'on') !== 'off',
   };
 }

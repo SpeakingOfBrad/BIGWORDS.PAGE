@@ -102,9 +102,11 @@ info = await blockInfo();
 check('size-max caps', info?.fontSize === 50, String(info?.fontSize));
 await page.goto(BASE + '/#' + 'word%20'.repeat(400) + '&size-min=40');
 await settle();
-const locked = await page.evaluate(() => document.querySelector('.bw-slide.bw-locked') !== null);
+const scrollable = await page.evaluate(() =>
+  [...document.querySelectorAll('.bw-stage *')].some((e) => /auto|scroll/.test(getComputedStyle(e).overflow)),
+);
 info = await blockInfo();
-check('size-min locks and scrolls', locked && info?.fontSize === 40, String(info?.fontSize));
+check('size-min holds the size without scrolling', !scrollable && info?.fontSize === 40, String(info?.fontSize));
 
 // Slides rotate
 await page.goto(BASE + '/#One||Two||Three&interval=1');
@@ -113,6 +115,25 @@ const first = (await blockInfo())?.text;
 await page.waitForTimeout(1500);
 const second = (await blockInfo())?.text;
 check('slides rotate', first === 'One' && second !== 'One', `${first} → ${second}`);
+await page.goto(BASE + '/#One||Two||Three&interval=0.3&trans=none');
+await settle(100);
+const seen = await page.evaluate(
+  () =>
+    new Promise((done) => {
+      const texts = new Set();
+      let most = 0;
+      const t0 = performance.now();
+      const step = () => {
+        const shown = [...document.querySelectorAll('.bw-slide')].filter((s) => !s.hidden);
+        most = Math.max(most, shown.length);
+        shown.forEach((s) => texts.add(s.textContent));
+        if (performance.now() - t0 < 1000) requestAnimationFrame(step);
+        else done({ texts: texts.size, most });
+      };
+      step();
+    }),
+);
+check('trans=none cuts between decimal-interval slides', seen.texts === 3 && seen.most === 1, JSON.stringify(seen));
 check('escaped || not split', await (async () => {
   await page.goto(BASE + '/#a\\||b');
   await settle();
@@ -221,11 +242,16 @@ await urlBox.fill('Edited%20%26%20done');
 await urlBox.press('Enter');
 await settle();
 check('a bare fragment works too', (await urlBox.inputValue()) === BASE + '/#Edited%20%26%20done', await urlBox.inputValue());
-await page.locator('.editor-controls select').first().selectOption('pulse').catch(() => null);
+// The animation picker writes anim=; set it back to none so the checks below
+// see the URL without it.
+const animPicker = page.locator('.editor-controls select[id^="anim-"]');
+await animPicker.selectOption('pulse');
 await page.locator('text=Copy URL').click();
 await settle();
 const clip = await page.evaluate(() => navigator.clipboard.readText());
-check('copy URL copies viewer URL', clip.startsWith(BASE + '/#Edited%20%26%20done'), clip);
+check('copy URL copies viewer URL', clip === BASE + '/#Edited%20%26%20done&anim=pulse', clip);
+await animPicker.selectOption('none');
+await settle();
 await page.locator('button[aria-label="Show QR code"]').click();
 check('QR button opens a dialog with a code', await page.locator('dialog.qr-dialog[open] .qr-code svg').isVisible());
 await page.keyboard.press('Escape');
