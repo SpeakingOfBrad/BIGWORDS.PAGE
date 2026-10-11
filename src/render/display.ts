@@ -1,12 +1,15 @@
 import type { Settings, Transition } from '../state/params';
 import { sizeToPx } from '../state/size';
 import { formatCountdown, everySecond } from './countdown';
+import type { DebugOverlay, FitInfo } from './debug';
 import { ensureFont, fontReady, fontStack } from './fonts';
 import { COUNTDOWN_TOKEN, parseMessage, parseSingle, type Slide } from './text';
 
 export interface DisplayOptions {
   /** Editor preview: draws the ratio frame. */
   editor?: boolean;
+  /** Fullscreen viewer: shows the debug overlay the `dbg` parameter asks for. */
+  debug?: boolean;
   onImageError?: (url: string) => void;
   onImageLoad?: (url: string) => void;
 }
@@ -257,6 +260,7 @@ export class Display {
   // can land later and change the text's metrics.
   private onFonts = () => this.scheduleFit();
   private destroyed = false;
+  private debug: DebugOverlay | null = null;
   private fitFrame = 0;
   private revealTimer = 0;
 
@@ -289,6 +293,7 @@ export class Display {
     this.media?.removeEventListener('change', this.onScheme);
     document.fonts?.removeEventListener('loadingdone', this.onFonts);
     cancelAnimationFrame(this.fitFrame);
+    this.debug?.destroy();
     this.root.replaceChildren();
     this.root.classList.remove('bw-stage', 'bw-editor');
     this.root.removeAttribute('style');
@@ -315,6 +320,7 @@ export class Display {
     this.expired = this.deadline !== null && Date.now() >= this.deadline;
     this.cdText = this.deadline !== null ? formatCountdown(this.deadline - Date.now(), settings.cdfmt) : '';
     this.buildSlides();
+    this.syncDebug();
     this.layout();
 
     if (this.deadline !== null) {
@@ -359,6 +365,26 @@ export class Display {
     this.box.style.color = fg;
     // Rainbow keeps contrast against the background.
     this.box.style.setProperty('--bw-rb-l', luminance(bg.slice(1)) > 0.4 ? '38%' : '62%');
+  }
+
+  // ---------------------------------------------------------------- debug
+
+  /** The overlay's code is only downloaded when `dbg` turns it on. */
+  private syncDebug(): void {
+    const level = () => (this.opts.debug && this.s ? this.s.dbg : 0);
+    if (!level()) {
+      this.debug?.destroy();
+      this.debug = null;
+    } else if (this.debug) {
+      this.debug.setLevel(level());
+    } else {
+      void import('./debug').then(({ DebugOverlay }) => {
+        if (this.destroyed || this.debug || !level()) return;
+        this.debug = new DebugOverlay(this.root);
+        this.debug.setLevel(level());
+        this.fitAll();
+      });
+    }
   }
 
   // ---------------------------------------------------------------- image & QR
@@ -667,6 +693,8 @@ export class Display {
       .map((n) => `${n.toFixed(3)}em`)
       .join(' ');
 
+    const trace: FitInfo['trace'] = [];
+    const tracing = this.debug?.tracing;
     let px: number;
     if (s.size) {
       px = sizeToPx(s.size, vw, vh);
@@ -675,6 +703,7 @@ export class Display {
         block.style.fontSize = `${size}px`;
         const okW = mode === 'height' || block.scrollWidth <= W + 0.5;
         const okH = mode === 'width' || block.scrollHeight <= H + 0.5;
+        if (tracing) trace.push({ size, w: block.scrollWidth, h: block.scrollHeight, ok: okW && okH });
         return okW && okH;
       };
       let lo = 1;
@@ -698,6 +727,8 @@ export class Display {
     }
     block.style.fontSize = `${Math.max(1, px)}px`;
     if (mode !== 'both') this.setMarquee(v, W, H);
+    // The panel describes the slide on screen, not one leaving it.
+    if (v === this.views[this.current]) this.debug?.fitted({ slide: this.views.indexOf(v), slides: this.views.length, block, W, H, px, fixed: !!s.size, minPx, maxPx, trace });
   }
 
   private setMarquee(v: SlideView, W: number, H: number): void {

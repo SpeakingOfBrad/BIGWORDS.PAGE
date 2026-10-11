@@ -92,6 +92,7 @@ Messaging apps and other tools that turn URLs into links usually stop the link b
 | `interval` | Seconds per slide | Number from 0.2 to 86400, to hundredths (`2`, `1.5`, `0.25`). Smaller values count as 0.2, larger ones as 86400. | `5` |
 | `trans` | Slide transition | `slide`, `none`, `fade`, `up`, `zoom`, see [Slides](#slides) | `slide` |
 | `wake` | Keep the screen awake | `on`, `off` | `on` |
+| `dbg` | Show debugging information, see [Debug](#debug) | `0` (off), `1`, `2`, `3` | `0` |
 
 An invalid value (bad hex, unknown font, impossible date…) quietly falls back to that parameter's default. The viewer never shows an error.
 
@@ -430,6 +431,21 @@ The image loads straight from its host, which is never told which page asked for
 - **Fullscreen:** the viewer never asks for fullscreen and has no controls. Use your browser's or kiosk's own fullscreen mode.
 - **Tab title:** always `BIGWORDS.PAGE`, whatever the message.
 - **Errors:** never shown. Bad parameters use defaults; failed images are left out.
+
+## Debug
+
+When a display doesn't look the way you expect, such as text smaller than it should be or something in the wrong place, `dbg` shows how the viewer laid it out. Each level adds to the one before:
+
+| `dbg` | Shows |
+|---|---|
+| `0` | Nothing. The display as normal. |
+| `1` | Outlines: the display (magenta), the padding (cyan), the text area (yellow), the text and each of its lines (green), the QR code (orange) and an image above or below the text (red), with a key along the top. |
+| `2` | Also a panel with the measurements behind the text size: whether it's running in a browser or as an installed app, the screen, window and text area sizes, the font size and whether it was fitted or fixed, the size of the text and each line, the extra room left for letters that draw past their edges, and whether the font has loaded. It describes the slide on screen and updates whenever the text is fitted. |
+| `3` | Also every size the fit tried, in order, with the size the text measured at each and whether it fit (✓ or ✗). The fit keeps the largest size that fits, so each ✓ should be smaller than every ✗. |
+
+[`{origin}/#Wi-Fi:%20**Cafe%20Guest**%0APassword:%0A**latte;art**&dbg=3`]({origin}/#Wi-Fi:%20**Cafe%20Guest**%0APassword:%0A**latte;art**&dbg=3)
+
+The overlay shows only in the viewer, not in the editor's preview. A screenshot of it at level 3 is the most useful thing to include when reporting a display problem.
 
 ## The editor
 

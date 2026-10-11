@@ -66,6 +66,16 @@ describe('params', () => {
     expect(s.wake).toBe(true);
   });
 
+  it('reads the debug level, off unless 1, 2 or 3', () => {
+    const dbg = (v?: string) => resolveSettings({ message: '', params: v === undefined ? {} : { dbg: v } }).dbg;
+    expect(dbg()).toBe(0);
+    expect(dbg('1')).toBe(1);
+    expect(dbg(' 3 ')).toBe(3);
+    for (const v of ['0', '4', '-1', '2.5', '01', 'on', '']) expect(dbg(v)).toBe(0);
+    expect(pruneDefaults({ dbg: '0' })).toEqual({});
+    expect(pruneDefaults({ dbg: '2' })).toEqual({ dbg: '2' });
+  });
+
   it('caps refresh and interval so browser timers never overflow', () => {
     const s = resolveSettings({ message: '', params: { refresh: '2147484', interval: '9999999999' } });
     expect(s.refresh).toBe(86400);

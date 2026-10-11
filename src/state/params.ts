@@ -42,6 +42,7 @@ export interface Settings {
   interval: number; // seconds, to hundredths
   trans: Transition;
   wake: boolean;
+  dbg: number; // 0 = off, 1–3 = debug overlay level
 }
 
 /** Canonical parameter order and the default value of each, as written in a URL. */
@@ -69,6 +70,7 @@ export const PARAM_DEFAULTS: Readonly<Record<string, string>> = {
   interval: '5',
   trans: 'slide',
   wake: 'on',
+  dbg: '0',
 };
 export const PARAM_ORDER = Object.keys(PARAM_DEFAULTS);
 
@@ -266,6 +268,7 @@ export function resolveSettings(state: State): Settings {
     interval: parseInterval(p.interval) ?? 5,
     trans: oneOf(TRANSITIONS, p.trans, 'slide'),
     wake: (p.wake?.trim().toLowerCase() ?? 'on') !== 'off',
+    dbg: /^[0-3]$/.test(p.dbg?.trim() ?? '') ? parseInt(p.dbg, 10) : 0,
   };
 }
 

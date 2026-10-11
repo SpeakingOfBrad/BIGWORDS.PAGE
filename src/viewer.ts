@@ -8,7 +8,7 @@ export function mountViewer(app: HTMLElement): { update(): void; destroy(): void
   const stage = document.createElement('div');
   stage.className = 'viewer-stage';
   app.replaceChildren(stage);
-  const display = new Display(stage);
+  const display = new Display(stage, { debug: true });
 
   let settings: Settings;
   let refreshTimer = 0;

@@ -6,6 +6,12 @@
 .bw-stage {
   overflow: hidden;
   contain: strict;
+  /* iOS enlarges text it judges too small, in landscape and in home screen
+     apps, and not on every layout. The fit then measures some sizes larger
+     than they draw and settles far too small. Text here is sized to fit, so
+     it never needs enlarging. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 .bw-box {
   position: absolute;
