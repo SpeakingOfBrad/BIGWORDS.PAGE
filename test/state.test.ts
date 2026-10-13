@@ -10,15 +10,18 @@ describe('fragment', () => {
     expect(s.params).toEqual({ bg: '000000', fg: 'ffffff', anim: 'pulse' });
   });
 
-  it('undoes a second round of percent-encoding', () => {
-    const s = parseFragment('#Hello,%2520**world**!%257C%257C%257Bcountdown%257D&until=2026-10-06T18:15:00Z&bg=%2523000000');
-    expect(s.message).toBe('Hello, **world**!||{countdown}');
-    expect(s.params).toEqual({ until: '2026-10-06T18:15:00Z', bg: '#000000' });
-  });
-
-  it('keeps a literal %XX when the fragment is encoded once', () => {
+  it('decodes exactly once, so a literal %XX survives', () => {
     expect(parseFragment('#50%25%20off%2520today').message).toBe('50% off%20today');
     expect(parseFragment('#100%25').message).toBe('100%');
+    expect(parseFragment('#https://e.dev/a%2520b').message).toBe('https://e.dev/a%20b');
+    expect(parseFragment('#100%2525off').message).toBe('100%25off');
+    expect(parseFragment('#Menu&qr=https://e.dev/a%2520b').params.qr).toBe('https://e.dev/a%20b');
+  });
+
+  it('round-trips a message made only of literal %XX text', () => {
+    for (const message of ['https://e.dev/a%20b', '100%25off']) {
+      expect(parseFragment(serializeFragment({ message, params: {} }, [])).message).toBe(message);
+    }
   });
 
   it('encodes trailing punctuation so linkifiers keep it in the link', () => {

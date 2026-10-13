@@ -123,6 +123,10 @@ export class DebugOverlay {
         ` · text ${size(b.scrollWidth, b.scrollHeight)} · ink padding ${b.style.padding || '0'}`,
       `lines ${lines.join(' ')}`,
       `fonts ${family.split(',')[0]} · regular loaded ${loaded(400)} · bold loaded ${loaded(700)}`,
+      // The link exactly as the browser received it, before any decoding:
+      // some apps re-encode a link when they hand it on.
+      `link ${location.hash}`,
+      `agent ${navigator.userAgent}`,
     ];
     if (this.level >= 3) {
       rows.push(

@@ -440,7 +440,7 @@ When a display doesn't look the way you expect, such as text smaller than it sho
 |---|---|
 | `0` | Nothing. The display as normal. |
 | `1` | Outlines: the display (magenta), the padding (cyan), the text area (yellow), the text and each of its lines (green), the QR code (orange) and an image above or below the text (red), with a key along the top. |
-| `2` | Also a panel with the measurements behind the text size: whether it's running in a browser or as an installed app, the screen, window and text area sizes, the font size and whether it was fitted or fixed, the size of the text and each line, the extra room left for letters that draw past their edges, and whether the font has loaded. It describes the slide on screen and updates whenever the text is fitted. |
+| `2` | Also a panel with the measurements behind the text size: whether it's running in a browser or as an installed app, the screen, window and text area sizes, the font size and whether it was fitted or fixed, the size of the text and each line, the extra room left for letters that draw past their edges, whether the font has loaded, the link exactly as the browser received it, before any decoding, and the browser's user agent. It describes the slide on screen and updates whenever the text is fitted. |
 | `3` | Also every size the fit tried, in order, with the size the text measured at each and whether it fit (✓ or ✗). The fit keeps the largest size that fits, so each ✓ should be smaller than every ✗. |
 
 [`{origin}/#Wi-Fi:%20**Cafe%20Guest**%0APassword:%0A**latte;art**&dbg=3`]({origin}/#Wi-Fi:%20**Cafe%20Guest**%0APassword:%0A**latte;art**&dbg=3)
