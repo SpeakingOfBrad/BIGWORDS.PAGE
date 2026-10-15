@@ -18,7 +18,7 @@ RUN npm run build
 # The stock Caddy image, with the site and its Caddyfile added, running as a
 # non-root user. Docker lets unprivileged processes bind port 80 inside the
 # container, and the caddy binary also has the capability to.
-FROM caddy:2-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9
+FROM caddy:2-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f
 RUN chown 65532:65532 /data /config
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /src/dist /usr/share/caddy
