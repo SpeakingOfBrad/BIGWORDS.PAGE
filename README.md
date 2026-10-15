@@ -55,7 +55,7 @@ All optional. Set them as environment variables for `npm run build`, or as build
 
 ## Development
 
-Requires Node 22.12+. CI and the Docker build use the LTS release in [`.node-version`](.node-version), currently 24.
+Requires Node 22.22.2+, 24.15+ or 26+. CI and the Docker build use the LTS release in [`.node-version`](.node-version), currently 24.
 
 ```sh
 npm install

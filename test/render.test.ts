@@ -3,7 +3,7 @@ import { typewriter } from '../src/render/animation';
 import { renderBlock } from '../src/render/block';
 import { displayColors, luminance, rainbowLightness } from '../src/render/colors';
 import { parseSingle } from '../src/render/text';
-import { planTransition } from '../src/render/transitions';
+import { planTransition, slideTravel } from '../src/render/transitions';
 
 describe('colors', () => {
   it('follows the system scheme unless colors are set', () => {
@@ -25,25 +25,55 @@ describe('colors', () => {
 });
 
 describe('planTransition', () => {
+  const travel = { x: 1001, y: 601 };
+
   it('uses the transition for at most 0.6s', () => {
-    const plan = planTransition('slide', 5, false);
+    const plan = planTransition('slide', 5, false, travel);
     expect(plan?.duration).toBe(600);
-    expect(plan?.incoming).toEqual([{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }]);
+    expect(plan?.incoming).toEqual([{ transform: 'translateX(1001px)' }, { transform: 'translateX(0)' }]);
+    expect(plan?.outgoing).toEqual([{ transform: 'translateX(0)' }, { transform: 'translateX(-1001px)' }]);
+  });
+
+  it('slides up by the vertical travel', () => {
+    const plan = planTransition('up', 5, false, travel);
+    expect(plan?.incoming).toEqual([{ transform: 'translateY(601px)' }, { transform: 'translateY(0)' }]);
+    expect(plan?.outgoing).toEqual([{ transform: 'translateY(0)' }, { transform: 'translateY(-601px)' }]);
   });
 
   it('takes no more than 40% of the interval', () => {
-    expect(planTransition('fade', 1, false)?.duration).toBe(400);
+    expect(planTransition('fade', 1, false, travel)?.duration).toBe(400);
   });
 
   it('cuts when asked to, or when the interval is too short to animate', () => {
-    expect(planTransition('none', 5, false)).toBeNull();
-    expect(planTransition('slide', 0.1, false)).toBeNull();
+    expect(planTransition('none', 5, false, travel)).toBeNull();
+    expect(planTransition('slide', 0.1, false, travel)).toBeNull();
   });
 
   it('fades instead of moving when reduced motion is on', () => {
-    const fade = planTransition('fade', 5, false);
-    expect(planTransition('zoom', 5, true)).toEqual(fade);
-    expect(planTransition('none', 5, true)).toBeNull();
+    const fade = planTransition('fade', 5, false, travel);
+    expect(planTransition('zoom', 5, true, travel)).toEqual(fade);
+    expect(planTransition('none', 5, true, travel)).toBeNull();
+  });
+});
+
+describe('slideTravel', () => {
+  it('moves both slides past the display edges', () => {
+    // Text filling a 900x500 area inside a 1000x600 display: 100% of the
+    // area would leave 50px of each slide on screen.
+    const text = { left: 50, top: 50, right: 950, bottom: 550 };
+    expect(slideTravel(1000, 600, text, text)).toEqual({ x: 951, y: 551 });
+  });
+
+  it('covers text that spills past the display', () => {
+    const wide = { left: -200, top: 100, right: 1200, bottom: 500 };
+    const small = { left: 480, top: 290, right: 520, bottom: 310 };
+    expect(slideTravel(1000, 600, wide, small)).toEqual({ x: 1201, y: 501 });
+    expect(slideTravel(1000, 600, small, wide)).toEqual({ x: 1201, y: 501 });
+  });
+
+  it('rounds up', () => {
+    const text = { left: 10.2, top: 10.2, right: 20.5, bottom: 20.5 };
+    expect(slideTravel(100, 100, text, text)).toEqual({ x: 91, y: 91 });
   });
 });
 

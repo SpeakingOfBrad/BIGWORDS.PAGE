@@ -11,7 +11,7 @@ import { ensureFont, fontReady, fontStack } from './fonts';
 import { inkOverhang } from './ink';
 import { activeSlides } from './slides';
 import type { Slide } from './text';
-import { planTransition, prefersReducedMotion } from './transitions';
+import { planTransition, prefersReducedMotion, slideTravel, type Extent } from './transitions';
 
 export interface DisplayOptions {
   /** Editor preview: draws the ratio frame. */
@@ -366,7 +366,8 @@ export class Display {
     this.fit(to);
     this.startAnim(to);
     const s = this.s!;
-    const plan = planTransition(s.trans, s.interval, prefersReducedMotion());
+    const travel = slideTravel(this.box.clientWidth, this.box.clientHeight, this.extent(to), this.extent(from));
+    const plan = planTransition(s.trans, s.interval, prefersReducedMotion(), travel);
     if (!plan || typeof to.el.animate !== 'function') {
       from.el.hidden = true;
       from.stopAnim?.();
@@ -380,6 +381,32 @@ export class Display {
         from.el.hidden = true;
         from.stopAnim?.();
       }
+    };
+  }
+
+  /**
+   * Where a slide's text can draw, in px from the display box's top left
+   * corner, which is where the display clips. Layout offsets rather than
+   * client rects, so the text's own animation and any scaling of the page
+   * (the editor preview) don't skew it.
+   */
+  private extent(v: SlideView): Extent {
+    const x = this.content.offsetLeft + this.area.offsetLeft;
+    const y = this.content.offsetTop + this.area.offsetTop;
+    // Marquee layers clip to the text area.
+    if (fitMode(this.s!.anim) !== 'both') {
+      return { left: x, top: y, right: x + this.area.offsetWidth, bottom: y + this.area.offsetHeight };
+    }
+    // Text in the other modes can spill out of the area, and its animations
+    // (pulse, shake, bounce) move it by up to 3% of its size.
+    const b = v.block;
+    const dx = b.offsetWidth * 0.04;
+    const dy = b.offsetHeight * 0.04;
+    return {
+      left: x + b.offsetLeft - dx,
+      top: y + b.offsetTop - dy,
+      right: x + b.offsetLeft + b.offsetWidth + dx,
+      bottom: y + b.offsetTop + b.offsetHeight + dy,
     };
   }
 
