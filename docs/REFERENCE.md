@@ -75,6 +75,7 @@ Messaging apps and other tools that turn URLs into links usually stop the link b
 | `size` | Font size | `auto`, pixels (`48`), or with a unit (`5vh`, `8vw`) | `auto` |
 | `size-min` | Smallest auto size. Text that needs to be smaller runs off the screen. | Pixels (`12`) or with a unit (`2vh`, `3vw`) | *(none)* |
 | `size-max` | Largest auto size | Pixels (`72`) or with a unit (`15vh`, `10vw`) | *(none)* |
+| `wrap` | Break long lines between words to fit the width, see [Wrapping](#wrapping) | `on`, `off` | `on` |
 | `pad` | Padding, in percent | `5`, `5,10` or `5,10,5,10`, see [Padding](#padding) | `5` |
 | `anim` | Animation | `none`, `pulse`, `flash`, `shake`, `bounce`, `scroll`, `crawl`, `typewriter`, `fadein`, `rainbow` | `none` |
 | `speed` | Animation speed | `slow`, `normal`, `fast` | `normal` |
@@ -165,7 +166,7 @@ All fonts ship with the site, each next to its license file. A font is only down
 
 ## Size
 
-With `size=auto` (the default), the text grows to the largest size at which the whole block fits inside the display minus its padding. Headings count at their full size. Text never wraps on its own: each line of the message stays on one line, so long lines make the text smaller. Add line breaks (`%0A`) where you want them. The size is recalculated whenever the window is resized or rotated, and each slide is fitted on its own.
+With `size=auto` (the default), the text grows to the largest size at which the whole block fits inside the display minus its padding. Headings count at their full size. Long lines wrap between words to fit, see [Wrapping](#wrapping). The size is recalculated whenever the window is resized or rotated, and each slide is fitted on its own.
 
 | Value | Meaning |
 |---|---|
@@ -181,6 +182,19 @@ With `size=auto` (the default), the text grows to the largest size at which the 
 - `0` counts as not set, so `size=0` is `auto`.
 
 Example: [`{origin}/#Big%20but%20not%20huge&size-max=12vh`]({origin}/#Big%20but%20not%20huge&size-max=12vh)
+
+### Wrapping
+
+With `wrap=on` (the default, **Word wrap** in the editor), lines break between words wherever they need to, and auto-fit picks the largest size at which the wrapped text fits. Long messages come out much bigger, and the same link fills a phone held upright as well as a wide TV, since each screen wraps the text its own way. The breaks are balanced, so a wrapped line doesn't end on a single short word where the browser supports it.
+
+- Your own line breaks and headings stay: wrapping only adds breaks.
+- Lines break at spaces and after hyphens, as on any web page, and between characters in languages written without spaces, such as Chinese and Japanese. A word is never split anywhere else: one too long for the width makes the text smaller.
+- With a fixed `size`, text wraps at that size instead of running off the sides.
+- `crawl` wraps to the width as it scrolls up. `scroll` moves sideways, so it ignores `wrap`.
+
+With `wrap=off`, each line of the message stays on one line, so long lines make the text smaller. Add line breaks (`%0A`) where you want them.
+
+Compare [wrapped]({origin}/#Sorry,%20I%20can%E2%80%99t%20talk%20right%20now.%20I%E2%80%99ll%20call%20you%20back%20in%20ten%20minutes.) and [`wrap=off`]({origin}/#Sorry,%20I%20can%E2%80%99t%20talk%20right%20now.%20I%E2%80%99ll%20call%20you%20back%20in%20ten%20minutes.&wrap=off).
 
 ## Padding
 

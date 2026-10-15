@@ -13,8 +13,8 @@ const TRANS_LABELS: Record<string, string> = {
 };
 
 /**
- * The message, its slides with their timing and transition, and a formatting
- * cheat sheet. `urlAdvice` is the note about the link's length, shown under
+ * The message, word wrap, its slides with their timing and transition, and a
+ * formatting cheat sheet. `urlAdvice` is the note about the link's length, shown under
  * the message. `renderSlides` rebuilds the slide list from the message.
  */
 export function messageSection(ctx: EditorContext, urlAdvice: HTMLElement): { element: HTMLElement; renderSlides(): void } {
@@ -30,6 +30,13 @@ export function messageSection(ctx: EditorContext, urlAdvice: HTMLElement): { el
   onSync(() => {
     if (textarea.value !== ctx.state.message) textarea.value = ctx.state.message;
   });
+
+  const wrap = h('input', { type: 'checkbox' });
+  wrap.addEventListener('change', () => set('wrap', wrap.checked ? '' : 'off'));
+  onSync(() => {
+    wrap.checked = ctx.settings().wrap;
+  });
+  const wrapHint = h('p', { class: 'hint' }, 'Breaks lines between words to fit the screen, so long messages come out bigger on any screen. Your own line breaks stay. Turn it off to keep each line of the message on one line. Scroll never wraps.');
 
   const slideList = h('ol', { class: 'slides', 'aria-label': 'Slides' });
   const addSlide = h('button', { class: 'btn btn-sm', type: 'button' }, '+ Add slide');
@@ -127,6 +134,8 @@ export function messageSection(ctx: EditorContext, urlAdvice: HTMLElement): { el
     textarea,
     // Lives here rather than under the preview so it can't change the preview's size.
     urlAdvice,
+    row(h('label', { class: 'check' }, wrap, 'Word wrap')),
+    wrapHint,
     row(addSlide, insertCd),
     slideList,
     intervalRow,

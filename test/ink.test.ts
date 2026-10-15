@@ -23,6 +23,20 @@ describe('linesOverhang', () => {
     expect(runs).toEqual(['top', 'a', 'c', 'end']);
   });
 
+  it('measures every run of middle lines when lines wrap', () => {
+    const runs: string[] = [];
+    linesOverhang([line('top'), line('a b c'), line('end')], (text) => (runs.push(text), inside), true);
+    expect(runs).toEqual(['top', 'a', 'b', 'c', 'end']);
+  });
+
+  it('takes edge overhangs from any run when lines wrap', () => {
+    const ink = (text: string): Ink => ({ ...inside, left: text === 'mid' ? 10 : 0, right: text === 'mid' ? 20 : 0 });
+    expect(linesOverhang([line('a mid b')], ink)).toEqual([0, 0, 0, 0]);
+    const [, right, , left] = linesOverhang([line('a mid b')], ink, true);
+    expect(left).toBeCloseTo(pad(10 / MEASURE_PX));
+    expect(right).toBeCloseTo(pad(20 / MEASURE_PX));
+  });
+
   it('takes the left overhang from first runs and the right from last runs', () => {
     const ink = (text: string): Ink => ({ ...inside, left: text === 'Wavy' ? 10 : 0, right: text === 'f' ? 20 : 3 });
     const [, right, , left] = linesOverhang([line('Wavy f')], ink);

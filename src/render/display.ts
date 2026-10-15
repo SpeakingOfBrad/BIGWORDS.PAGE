@@ -6,7 +6,7 @@ import { displayColors, prefersLight, rainbowLightness } from './colors';
 import { formatCountdown, everySecond } from './countdown';
 import type { DebugOverlay, FitInfo } from './debug';
 import { el } from './dom';
-import { autoSize, boxRect, contentInsets, fitMode, marquee, qrMetrics } from './fit';
+import { autoSize, boxRect, contentInsets, fitMode, marquee, qrMetrics, wraps } from './fit';
 import { ensureFont, fontReady, fontStack } from './fonts';
 import { inkOverhang } from './ink';
 import { activeSlides } from './slides';
@@ -314,7 +314,9 @@ export class Display {
     this.area.replaceChildren();
     const countdown = this.deadline !== null ? { expired: this.expired, zero: s.zero } : null;
     this.views = activeSlides(s.message, countdown).map((slide) => {
-      const layer = el('div', `bw-slide bw-mode-${fitMode(s.anim)}`);
+      const mode = fitMode(s.anim);
+      const layer = el('div', `bw-slide bw-mode-${mode}`);
+      if (wraps(s.wrap, mode)) layer.classList.add('bw-wrap');
       const block = renderBlock(slide, this.deadline !== null ? this.cdText : null);
       if (s.anim !== 'none') block.classList.add(`bw-anim-${s.anim}`);
       layer.append(block);
@@ -493,7 +495,7 @@ export class Display {
     const minPx = s.sizeMin ? sizeToPx(s.sizeMin, vw, vh) : 0;
     const maxPx = s.sizeMax ? sizeToPx(s.sizeMax, vw, vh) : Infinity;
     const mode = fitMode(s.anim);
-    block.style.padding = inkOverhang(block)
+    block.style.padding = inkOverhang(block, wraps(s.wrap, mode))
       .map((n) => `${n.toFixed(3)}em`)
       .join(' ');
 
@@ -504,9 +506,13 @@ export class Display {
     if (s.size) {
       px = sizeToPx(s.size, vw, vh);
     } else {
+      // A wrapped word wider than the lines spills into the block's padding,
+      // the room kept for overhanging ink, and the block's own scrollWidth
+      // doesn't count that: each line has to fit too.
+      const lines = wraps(s.wrap, mode) ? [...block.querySelectorAll<HTMLElement>(':scope > .bw-line')] : [];
       const fits = (size: number) => {
         block.style.fontSize = `${size}px`;
-        const okW = mode === 'height' || block.scrollWidth <= W + 0.5;
+        const okW = mode === 'height' || (block.scrollWidth <= W + 0.5 && lines.every((l) => l.scrollWidth <= l.clientWidth + 0.5));
         const okH = mode === 'width' || block.scrollHeight <= H + 0.5;
         if (tracing) trace.push({ size, w: block.scrollWidth, h: block.scrollHeight, ok: okW && okH });
         return okW && okH;

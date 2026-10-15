@@ -22,6 +22,7 @@ const DEFAULT_CASES = [
   '800|450|*f*&font=0',
   '800|450|f&font=6', // measured before Caveat loads; must re-measure after
   '443|300|%E2%80%98Hello%E2%80%99;%0A**world!**&font=6',
+  '390|844|*Fluffy%20wavy%20flowers%20for%20the%20jolly%20folk%20of%20Huffington*&font=6', // any word can end a wrapped line
 ];
 const cases = process.argv.length > 2 ? process.argv.slice(2) : DEFAULT_CASES;
 let clipped = 0;

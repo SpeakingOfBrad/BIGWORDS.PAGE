@@ -69,6 +69,15 @@ describe('params', () => {
     expect(s.wake).toBe(true);
   });
 
+  it('wraps unless wrap=off', () => {
+    const wrap = (v?: string) => resolveSettings({ message: '', params: v === undefined ? {} : { wrap: v } }).wrap;
+    expect(wrap()).toBe(true);
+    expect(wrap('on')).toBe(true);
+    expect(wrap('off')).toBe(false);
+    expect(wrap(' OFF ')).toBe(false);
+    expect(wrap('maybe')).toBe(true);
+  });
+
   it('reads the debug level, off unless 1, 2 or 3', () => {
     const dbg = (v?: string) => resolveSettings({ message: '', params: v === undefined ? {} : { dbg: v } }).dbg;
     expect(dbg()).toBe(0);

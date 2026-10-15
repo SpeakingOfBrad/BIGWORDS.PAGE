@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { typewriter } from '../src/render/animation';
-import { renderBlock } from '../src/render/block';
+import { breakableSpaces, renderBlock } from '../src/render/block';
 import { displayColors, luminance, rainbowLightness } from '../src/render/colors';
 import { parseSingle } from '../src/render/text';
 import { planTransition, slideTravel } from '../src/render/transitions';
@@ -74,6 +74,33 @@ describe('slideTravel', () => {
   it('rounds up', () => {
     const text = { left: 10.2, top: 10.2, right: 20.5, bottom: 20.5 };
     expect(slideTravel(100, 100, text, text)).toEqual({ x: 91, y: 91 });
+  });
+});
+
+describe('breakableSpaces', () => {
+  const n = '\u00a0';
+
+  it('leaves single spaces between words breakable', () => {
+    expect(breakableSpaces(['Hello big world'])).toEqual(['Hello big world']);
+  });
+
+  it('keeps only the last of several spaces in a row breakable', () => {
+    expect(breakableSpaces(['a   b'])).toEqual([`a${n}${n} b`]);
+  });
+
+  it('never breaks at spaces that start or end the line', () => {
+    expect(breakableSpaces(['  a b  '])).toEqual([`${n}${n}a b${n}${n}`]);
+    expect(breakableSpaces(['   '])).toEqual([`${n}${n}${n}`]);
+  });
+
+  it('works across runs, with a countdown counting as a word', () => {
+    expect(breakableSpaces(['in  ', null, ' left', '  '])).toEqual([`in${n} `, null, ' left', `${n}${n}`]);
+    expect(breakableSpaces(['a ', '', ' b'])).toEqual([`a${n}`, '', ' b']);
+  });
+
+  it('renders the spaces into the block', () => {
+    const block = renderBlock(parseSingle(' **a**  b'), null);
+    expect(block.textContent).toBe(`${n}a${n} b`);
   });
 });
 

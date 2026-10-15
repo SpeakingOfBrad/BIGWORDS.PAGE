@@ -79,10 +79,11 @@ export interface InkLine {
  * The overhang of a block's lines, in em of its base size: [top, right,
  * bottom, left], with a small margin for antialiasing and rendering
  * differences between the canvas and the page. `measure` gives the ink of a
- * run of characters in one font. Only runs that reach an edge are measured:
- * the first and last of each line, and every run of the first and last lines.
+ * run of characters in one font. Only runs that can reach an edge are
+ * measured: the first and last of each line, and every run of the first and
+ * last lines. When lines `wrap`, any run can start or end a line.
  */
-export function linesOverhang(lines: InkLine[], measure: (text: string, font: string) => Ink): [number, number, number, number] {
+export function linesOverhang(lines: InkLine[], measure: (text: string, font: string) => Ink, wrap = false): [number, number, number, number] {
   let top = 0;
   let right = 0;
   let bottom = 0;
@@ -104,9 +105,9 @@ export function linesOverhang(lines: InkLine[], measure: (text: string, font: st
       let j = i;
       let text = '';
       while (j < chars.length && !isSpace(chars[j].c) && chars[j].font === chars[i].font) text += chars[j++].c;
-      // Lines never wrap, so only a line's first and last runs reach its edges.
-      const atStart = i === 0;
-      const atEnd = j === chars.length;
+      // Unwrapped, only a line's first and last runs reach its edges.
+      const atStart = wrap || i === 0;
+      const atEnd = wrap || j === chars.length;
       if (atStart || atEnd || firstLine || lastLine) {
         const ink = measure(text, chars[i].font);
         if (atStart) left = Math.max(left, ink.left * em);
@@ -132,7 +133,7 @@ export function linesOverhang(lines: InkLine[], measure: (text: string, font: st
  * clipped at the edges of the text area. Padding the block by these amounts
  * makes the fit leave room for it, and centers the ink rather than the boxes.
  */
-export function inkOverhang(block: HTMLElement): [number, number, number, number] {
+export function inkOverhang(block: HTMLElement, wrap = false): [number, number, number, number] {
   measureCtx ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
   const ctx = measureCtx;
   if (!ctx) return [0, 0, 0, 0];
@@ -157,5 +158,5 @@ export function inkOverhang(block: HTMLElement): [number, number, number, number
     }
     return { scale, chars };
   });
-  return linesOverhang(lines, (text, font) => measureInk(ctx, text, font, fontReady(font)));
+  return linesOverhang(lines, (text, font) => measureInk(ctx, text, font, fontReady(font)), wrap);
 }

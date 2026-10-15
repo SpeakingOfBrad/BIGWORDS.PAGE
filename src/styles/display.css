@@ -92,9 +92,18 @@
   margin: auto;
   text-align: center;
   line-height: 1.15;
-  /* Only the message's own line breaks: text never wraps. */
+  /* Only the message's own line breaks, unless the text wraps. */
   white-space: pre;
   font-kerning: normal;
+}
+/* Wrapping: lines also break at the spaces renderBlock leaves breakable,
+   never inside a word, and the breaks are balanced so a wrapped line's last
+   row isn't left short. Every other space is non-breaking, so collapsing
+   white space changes nothing but the space at a break. */
+.bw-wrap > .bw-block {
+  max-width: 100%;
+  white-space: normal;
+  text-wrap: balance;
 }
 .bw-line {
   min-height: 1.15em;

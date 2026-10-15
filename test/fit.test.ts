@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { autoSize, boxRect, contentInsets, fitMode, marquee, qrMetrics } from '../src/render/fit';
+import { autoSize, boxRect, contentInsets, fitMode, marquee, qrMetrics, wraps } from '../src/render/fit';
 
 /** Text that fits whenever the font size is at most `limit` px. */
 const upTo = (limit: number) => (px: number) => px <= limit;
@@ -52,6 +52,15 @@ describe('fitMode', () => {
     expect(fitMode('crawl')).toBe('width');
     expect(fitMode('pulse')).toBe('both');
     expect(fitMode(undefined)).toBe('both');
+  });
+});
+
+describe('wraps', () => {
+  it('wraps when asked, except for scroll', () => {
+    expect(wraps(true, 'both')).toBe(true);
+    expect(wraps(true, 'width')).toBe(true);
+    expect(wraps(true, 'height')).toBe(false);
+    expect(wraps(false, 'both')).toBe(false);
   });
 });
 

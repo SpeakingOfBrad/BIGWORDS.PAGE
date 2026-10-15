@@ -95,6 +95,29 @@ for (const [w, hgt] of [[375, 667], [1920, 1080], [800, 800]]) {
   check(`ratio box ${w}x${hgt}`, Math.abs(box - 4 / 3) < 0.02, String(box));
 }
 await shot('viewer-ratio');
+
+// Long lines wrap to fit, on any screen shape
+const longMsg = 'Sorry,%20I%20can%E2%80%99t%20talk%20right%20now.%20I%E2%80%99ll%20call%20you%20back%20in%20ten%20minutes.';
+for (const [w, hgt] of [[375, 667], [1920, 1080]]) {
+  await page.setViewportSize({ width: w, height: hgt });
+  await page.goto(BASE + '/#' + longMsg + '&wrap=off');
+  await settle(700);
+  const unwrapped = await blockInfo();
+  await page.goto(BASE + '/#' + longMsg + '&font=3');
+  await settle(700);
+  info = await blockInfo();
+  const rows = await page.evaluate(() => {
+    const line = document.querySelector('.bw-slide:not([hidden]) .bw-line');
+    return Math.round(line.getBoundingClientRect().height / (parseFloat(getComputedStyle(line).fontSize) * 1.15));
+  });
+  check(`wrap ${w}x${hgt} fills and stays inside`, !!info && info.inside && info.fill > 0.9 && rows > 1, `${rows} rows, ${JSON.stringify(info)}`);
+  check(`wrap ${w}x${hgt} is bigger than one line`, !!info && !!unwrapped && info.fontSize > 2 * unwrapped.fontSize, `${unwrapped?.fontSize} → ${info?.fontSize}`);
+  await shot(`viewer-wrap-${w}`);
+}
+await page.goto(BASE + '/#Supercalifragilisticexpialidocious%20is%20long');
+await settle(700);
+info = await blockInfo();
+check('wrap never splits a word', !!info && info.inside, JSON.stringify(info));
 await page.setViewportSize({ width: 1280, height: 720 });
 
 // size-max and size-min
@@ -316,6 +339,9 @@ check('editor drops the until that lost', !page.url().includes('until=') && page
 await page.locator('.font-btn').nth(4).click();
 await settle();
 check('font picker writes font=4', page.url().includes('font=4'), page.url());
+await page.getByLabel('Word wrap').uncheck();
+await settle();
+check('wrap checkbox writes wrap=off', page.url().includes('wrap=off'), page.url());
 await page.getByRole('textbox', { name: 'Message', exact: true }).fill('One||Two||Three');
 await settle();
 check('slide manager lists slides', (await page.locator('.slides li').count()) === 3);

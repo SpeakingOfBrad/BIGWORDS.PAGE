@@ -7,6 +7,11 @@ export function fitMode(anim: Animation | undefined): FitMode {
   return anim === 'scroll' ? 'height' : anim === 'crawl' ? 'width' : 'both';
 }
 
+/** Whether lines break to fit the width. Scroll moves text sideways, so its lines never break. */
+export function wraps(wrap: boolean, mode: FitMode): boolean {
+  return wrap && mode !== 'height';
+}
+
 export interface AutoSizeOptions {
   mode: FitMode;
   /** The text area, in px. */

@@ -25,6 +25,7 @@ export interface Settings {
   size: SizeValue | null; // null = auto
   sizeMin: SizeValue | null;
   sizeMax: SizeValue | null;
+  wrap: boolean; // break lines at spaces to fit the width
   pad: [number, number, number, number]; // top, right, bottom, left (percent)
   anim: Animation;
   speed: Speed;
@@ -53,6 +54,7 @@ export const PARAM_DEFAULTS: Readonly<Record<string, string>> = {
   size: 'auto',
   'size-min': '',
   'size-max': '',
+  wrap: 'on',
   pad: '5',
   anim: 'none',
   speed: 'normal',
@@ -251,6 +253,7 @@ export function resolveSettings(state: State): Settings {
     size,
     sizeMin: parseSize(p['size-min'] ?? ''),
     sizeMax: parseSize(p['size-max'] ?? ''),
+    wrap: (p.wrap?.trim().toLowerCase() ?? 'on') !== 'off',
     pad: parsePad(p.pad) ?? [5, 5, 5, 5],
     anim: oneOf(ANIMATIONS, p.anim, 'none'),
     speed: oneOf(SPEEDS, p.speed, 'normal'),
