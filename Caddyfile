@@ -1,3 +1,15 @@
+# Static files only: no admin API, no saved config and no certificates (the
+# reverse proxy terminates TLS), so the container runs as a non-root user with
+# a read-only filesystem.
+{
+	admin off
+	persist_config off
+	auto_https off
+	servers {
+		protocols h1
+	}
+}
+
 # img-src stays open because displays show images from any host. Inline styles
 # are needed for the runtime @font-face rules and style attributes. A snippet,
 # so 404 responses get these headers too.

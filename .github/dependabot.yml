@@ -1,0 +1,28 @@
+# Monthly and grouped by ecosystem: at most three update PRs a month.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      npm:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ["*"]
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      docker:
+        patterns: ["*"]
+    # Node majors move together with .node-version, as a deliberate upgrade.
+    ignore:
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]

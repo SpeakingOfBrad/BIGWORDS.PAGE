@@ -9,6 +9,17 @@ services:
       #   OPERATOR_DOCS: operator.md
     image: bigwords-page
     restart: unless-stopped
+    # Locked down by default: the image runs as a non-root user and only
+    # serves static files, so it needs no writable filesystem beyond Caddy's
+    # scratch space and no capabilities beyond binding port 80.
+    read_only: true
+    tmpfs:
+      - /data:uid=65532,gid=65532
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.5
     # No ports are published. Your reverse proxy reaches the container on
     # port 80 over the shared network and terminates TLS.
     # ports:

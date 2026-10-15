@@ -1,9 +1,17 @@
-import type { Settings, Transition } from '../state/params';
+import type { Settings } from '../state/params';
 import { sizeToPx } from '../state/size';
+import { BASE_DURATION, SPEED_FACTOR, typewriter } from './animation';
+import { renderBlock } from './block';
+import { displayColors, prefersLight, rainbowLightness } from './colors';
 import { formatCountdown, everySecond } from './countdown';
 import type { DebugOverlay, FitInfo } from './debug';
+import { el } from './dom';
+import { autoSize, boxRect, contentInsets, fitMode, marquee, qrMetrics } from './fit';
 import { ensureFont, fontReady, fontStack } from './fonts';
-import { COUNTDOWN_TOKEN, parseMessage, parseSingle, type Slide } from './text';
+import { inkOverhang } from './ink';
+import { activeSlides } from './slides';
+import type { Slide } from './text';
+import { planTransition, prefersReducedMotion } from './transitions';
 
 export interface DisplayOptions {
   /** Editor preview: draws the ratio frame. */
@@ -16,56 +24,8 @@ export interface DisplayOptions {
   onImageLoad?: (url: string) => void;
 }
 
-const SPEED_FACTOR = { slow: 2, normal: 1, fast: 0.5 } as const;
-const BASE_DURATION: Record<string, number> = {
-  pulse: 2,
-  flash: 1,
-  shake: 0.4,
-  bounce: 1,
-  fadein: 1.5,
-  rainbow: 6,
-};
 const CODE_FONT = 5; // JetBrains Mono, loaded only when a message has `code`
 const FONT_WAIT_MS = 1500; // longest the text stays hidden waiting for its font
-const SLIDE_TRANSITION_MS = 600;
-/** Share of the interval a transition may take, so fast slides never overlap. */
-const TRANSITION_SHARE = 0.4;
-/** Shorter transitions than this are cut instead. */
-const MIN_TRANSITION_MS = 50;
-
-type Frames = [Keyframe[], Keyframe[]]; // incoming slide, outgoing slide
-
-const TRANSITION_FRAMES: Record<Exclude<Transition, 'none'>, Frames> = {
-  slide: [
-    [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }],
-    [{ transform: 'translateX(0)' }, { transform: 'translateX(-100%)' }],
-  ],
-  up: [
-    [{ transform: 'translateY(100%)' }, { transform: 'translateY(0)' }],
-    [{ transform: 'translateY(0)' }, { transform: 'translateY(-100%)' }],
-  ],
-  fade: [
-    [{ opacity: 0 }, { opacity: 1 }],
-    [{ opacity: 1 }, { opacity: 0 }],
-  ],
-  zoom: [
-    [{ opacity: 0, transform: 'scale(0.6)' }, { opacity: 1, transform: 'scale(1)' }],
-    [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(1.15)' }],
-  ],
-};
-
-function prefersReducedMotion(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-}
-
-type FitMode = 'both' | 'height' | 'width';
-
-interface SlideView {
-  slide: Slide;
-  el: HTMLElement; // full-area layer
-  block: HTMLElement; // the text block
-  stopAnim?: () => void;
-}
 
 /**
  * The image URL with a throwaway query parameter, so neither the browser nor
@@ -77,165 +37,11 @@ function cacheBusted(url: string): string {
   return `${base}${base.includes('?') ? '&' : '?'}_=${Date.now()}${hash === -1 ? '' : url.slice(hash)}`;
 }
 
-function prefersLight(): boolean {
-  return typeof matchMedia === 'function' && matchMedia('(prefers-color-scheme: light)').matches;
-}
-
-function luminance(hex: string): number {
-  const n = parseInt(hex, 16);
-  const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
-    const c = v / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  });
-  return 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
-}
-
-function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls?: string): HTMLElementTagNameMap[K] {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  return e;
-}
-
-let measureCtx: CanvasRenderingContext2D | null = null;
-const MEASURE_PX = 100;
-const isSpace = (c: string | undefined) => c === undefined || /\s/.test(c);
-
-interface Ink {
-  width: number; // advance width
-  left: number; // ink past the start of the advance box
-  right: number; // ink past the end of the advance box
-  ascent: number; // ink above the baseline
-  descent: number; // ink below the baseline
-  fontAscent?: number;
-  fontDescent?: number;
-}
-const inkCache = new Map<string, Ink>();
-// Cached results depend on which fonts were loaded when measured.
-if (typeof document !== 'undefined' && document.fonts) {
-  document.fonts.addEventListener('loadingdone', () => inkCache.clear());
-}
-
-/**
- * Where a run of text really puts ink, found by drawing it and scanning the
- * pixels. Canvas text metrics (actualBoundingBox*) are not trustworthy for
- * this: Safari reports Caveat's overhangs short of what it draws.
- */
-function measureInk(ctx: CanvasRenderingContext2D, text: string, font: string, ready: boolean): Ink {
-  // Whether the web font is ready is part of the key, so a measurement taken
-  // with a fallback font is never reused once the real one loads.
-  const key = `${ready}\n${font}\n${text}`;
-  const hit = inkCache.get(key);
-  if (hit) return hit;
-  ctx.font = font;
-  const m = ctx.measureText(text);
-  const M = MEASURE_PX;
-  const w = Math.ceil(m.width + 2 * M);
-  const h = 3 * M;
-  const cv = ctx.canvas;
-  if (cv.width < w) cv.width = w;
-  if (cv.height < h) cv.height = h;
-  ctx.clearRect(0, 0, cv.width, cv.height);
-  ctx.font = font; // resizing the canvas resets its state
-  ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#000';
-  ctx.fillText(text, M, 2 * M);
-  const data = ctx.getImageData(0, 0, w, h).data;
-  let minX = w;
-  let maxX = -1;
-  let minY = h;
-  let maxY = -1;
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      if (data[(y * w + x) * 4 + 3] > 8) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
-      }
-    }
-  }
-  const ink: Ink =
-    maxX < 0
-      ? { width: m.width, left: 0, right: 0, ascent: 0, descent: 0 }
-      : { width: m.width, left: M - minX, right: maxX + 1 - (M + m.width), ascent: 2 * M - minY, descent: maxY + 1 - 2 * M };
-  ink.fontAscent = m.fontBoundingBoxAscent;
-  ink.fontDescent = m.fontBoundingBoxDescent;
-  inkCache.set(key, ink);
-  return ink;
-}
-
-/**
- * How far the block's glyph ink extends past its layout boxes, in em of the
- * block's base size: [top, right, bottom, left]. Some fonts draw outside the
- * space they reserve for a character (Caveat's slanted strokes and swashes,
- * italic faces), and since text is fitted against layout boxes, that ink was
- * clipped at the edges of the text area. Padding the block by these amounts
- * makes the fit leave room for it, and centers the ink rather than the boxes.
- */
-function inkOverhang(block: HTMLElement): [number, number, number, number] {
-  measureCtx ??= document.createElement('canvas').getContext('2d', { willReadFrequently: true });
-  const ctx = measureCtx;
-  if (!ctx) return [0, 0, 0, 0];
-  let top = 0;
-  let right = 0;
-  let bottom = 0;
-  let left = 0;
-  // document.fonts.check is slow, so ask once per font per call.
-  const readyByFont = new Map<string, boolean>();
-  const fontReady = (font: string) => {
-    let r = readyByFont.get(font);
-    if (r === undefined) {
-      r = document.fonts ? document.fonts.check(font) : true;
-      readyByFont.set(font, r);
-    }
-    return r;
-  };
-  const lines = [...block.querySelectorAll<HTMLElement>(':scope > .bw-line')];
-  lines.forEach((line, li) => {
-    const scale = line.classList.contains('bw-h1') ? 2 : line.classList.contains('bw-h2') ? 1.5 : 1;
-    const lineHeight = scale > 1 ? 1.1 : 1.15;
-    const em = scale / MEASURE_PX;
-    const firstLine = li === 0;
-    const lastLine = li === lines.length - 1;
-    // Each character with the style it's drawn in.
-    const chars: { c: string; font: string }[] = [];
-    for (const span of line.querySelectorAll<HTMLElement>(':scope > span')) {
-      const cs = getComputedStyle(span);
-      const font = `${cs.fontStyle} ${cs.fontWeight} ${MEASURE_PX}px ${cs.fontFamily}`;
-      for (const c of Array.from(span.textContent ?? '')) chars.push({ c, font });
-    }
-    // Measure runs of same-style, non-space characters rather than single
-    // characters: script fonts like Caveat pick contextual glyph variants, so a
-    // letter's ink depends on its neighbours.
-    let i = 0;
-    while (i < chars.length) {
-      if (isSpace(chars[i].c)) {
-        i++;
-        continue;
-      }
-      let j = i;
-      let text = '';
-      while (j < chars.length && !isSpace(chars[j].c) && chars[j].font === chars[i].font) text += chars[j++].c;
-      // Lines never wrap, so only a line's first and last runs reach its edges.
-      const atStart = i === 0;
-      const atEnd = j === chars.length;
-      if (atStart || atEnd || firstLine || lastLine) {
-        const ink = measureInk(ctx, text, chars[i].font, fontReady(chars[i].font));
-        if (atStart) left = Math.max(left, ink.left * em);
-        if (atEnd) right = Math.max(right, ink.right * em);
-        if ((firstLine || lastLine) && ink.fontAscent !== undefined && ink.fontDescent !== undefined) {
-          const halfLeading = (lineHeight * MEASURE_PX - (ink.fontAscent + ink.fontDescent)) / 2;
-          if (firstLine) top = Math.max(top, (ink.ascent - ink.fontAscent - halfLeading) * em);
-          if (lastLine) bottom = Math.max(bottom, (ink.descent - ink.fontDescent - halfLeading) * em);
-        }
-      }
-      i = j;
-    }
-  });
-  // A small margin for antialiasing and rendering differences between the
-  // canvas and the page.
-  const pad = (n: number) => (n > 0 ? n * 1.05 + 0.02 : 0);
-  return [pad(top), pad(right), pad(bottom), pad(left)];
+interface SlideView {
+  slide: Slide;
+  el: HTMLElement; // full-area layer
+  block: HTMLElement; // the text block
+  stopAnim?: () => void;
 }
 
 /**
@@ -362,24 +168,15 @@ export class Display {
 
   // ---------------------------------------------------------------- colors
 
-  private colors(): { bg: string; fg: string } {
-    const s = this.s!;
-    const light = prefersLight();
-    return {
-      bg: '#' + (s.bg ?? (light ? 'ffffff' : '000000')),
-      fg: '#' + (s.fg ?? (light ? '000000' : 'ffffff')),
-    };
-  }
-
   private applyColors(): void {
     if (!this.s) return;
-    const { bg, fg } = this.colors();
+    const { bg, fg } = displayColors(this.s.bg, this.s.fg, prefersLight());
     this.root.style.backgroundColor = bg;
     this.box.style.backgroundColor = bg;
     this.box.style.setProperty('--bw-bg', bg);
     this.box.style.color = fg;
     // Rainbow keeps contrast against the background.
-    this.box.style.setProperty('--bw-rb-l', luminance(bg.slice(1)) > 0.4 ? '38%' : '62%');
+    this.box.style.setProperty('--bw-rb-l', rainbowLightness(bg));
   }
 
   // ---------------------------------------------------------------- debug
@@ -511,57 +308,14 @@ export class Display {
 
   // ---------------------------------------------------------------- slides
 
-  private activeSlides(): Slide[] {
-    const s = this.s!;
-    let message = s.message;
-    if (this.deadline !== null && message.trim() === '') message = COUNTDOWN_TOKEN;
-    const slides = parseMessage(message);
-    if (this.deadline === null || !this.expired) return slides;
-    const zero = s.zero;
-    if (zero.kind === 'freeze') return slides;
-    if (slides.length === 1) {
-      return zero.kind === 'hide' ? [] : [parseSingle(zero.message)];
-    }
-    if (zero.kind === 'hide') return slides.filter((sl) => !sl.hasCountdown);
-    const replacement = parseSingle(zero.message);
-    return slides.map((sl) => (sl.hasCountdown ? replacement : sl));
-  }
-
-  private renderBlock(slide: Slide): HTMLElement {
-    const block = el('div', 'bw-block');
-    for (const line of slide.lines) {
-      const ln = el('div', line.level ? `bw-line bw-h${line.level}` : 'bw-line');
-      if (line.runs.length === 0) ln.append(document.createElement('br'));
-      for (const run of line.runs) {
-        const span = el('span');
-        if (run.bold) span.classList.add('bw-b');
-        if (run.italic) span.classList.add('bw-i');
-        if (run.strike) span.classList.add('bw-s');
-        if (run.code) span.classList.add('bw-code');
-        if (run.countdown) {
-          if (this.deadline !== null) {
-            span.classList.add('bw-cd');
-            span.textContent = this.cdText;
-          } else {
-            span.textContent = COUNTDOWN_TOKEN;
-          }
-        } else {
-          span.textContent = run.text;
-        }
-        ln.append(span);
-      }
-      block.append(ln);
-    }
-    return block;
-  }
-
   private buildSlides(): void {
     const s = this.s!;
     this.views.forEach((v) => v.stopAnim?.());
     this.area.replaceChildren();
-    this.views = this.activeSlides().map((slide) => {
-      const layer = el('div', `bw-slide bw-mode-${this.fitMode()}`);
-      const block = this.renderBlock(slide);
+    const countdown = this.deadline !== null ? { expired: this.expired, zero: s.zero } : null;
+    this.views = activeSlides(s.message, countdown).map((slide) => {
+      const layer = el('div', `bw-slide bw-mode-${fitMode(s.anim)}`);
+      const block = renderBlock(slide, this.deadline !== null ? this.cdText : null);
       if (s.anim !== 'none') block.classList.add(`bw-anim-${s.anim}`);
       layer.append(block);
       layer.hidden = true;
@@ -612,19 +366,15 @@ export class Display {
     this.fit(to);
     this.startAnim(to);
     const s = this.s!;
-    const duration = Math.min(SLIDE_TRANSITION_MS, s.interval * 1000 * TRANSITION_SHARE);
-    // Fading isn't movement, so it stands in for the moving transitions when
-    // the viewer's system asks for reduced motion.
-    const trans = s.trans !== 'none' && prefersReducedMotion() ? 'fade' : s.trans;
-    if (trans === 'none' || duration < MIN_TRANSITION_MS || typeof to.el.animate !== 'function') {
+    const plan = planTransition(s.trans, s.interval, prefersReducedMotion());
+    if (!plan || typeof to.el.animate !== 'function') {
       from.el.hidden = true;
       from.stopAnim?.();
       return;
     }
-    const [inFrames, outFrames] = TRANSITION_FRAMES[trans];
-    const opts: KeyframeAnimationOptions = { duration, easing: 'ease-in-out' };
-    to.el.animate(inFrames, opts);
-    const out = from.el.animate(outFrames, opts);
+    const opts: KeyframeAnimationOptions = { duration: plan.duration, easing: 'ease-in-out' };
+    to.el.animate(plan.incoming, opts);
+    const out = from.el.animate(plan.outgoing, opts);
     out.onfinish = () => {
       if (this.views[this.current] !== from) {
         from.el.hidden = true;
@@ -679,35 +429,19 @@ export class Display {
   private layout(): void {
     const s = this.s;
     if (!s) return;
-    const W = this.root.clientWidth;
-    const H = this.root.clientHeight;
-    let bw = W;
-    let bh = H;
-    if (s.ratio) {
-      const r = s.ratio[0] / s.ratio[1];
-      if (W / H > r) bw = H * r;
-      else bh = W / r;
-    }
-    bw = Math.max(0, Math.round(bw));
-    bh = Math.max(0, Math.round(bh));
+    const box = boxRect(this.root.clientWidth, this.root.clientHeight, s.ratio);
     Object.assign(this.box.style, {
-      width: `${bw}px`,
-      height: `${bh}px`,
-      left: `${Math.round((W - bw) / 2)}px`,
-      top: `${Math.round((H - bh) / 2)}px`,
+      width: `${box.width}px`,
+      height: `${box.height}px`,
+      left: `${box.left}px`,
+      top: `${box.top}px`,
     });
-    const [pt, pr, pb, pl] = s.pad;
-    Object.assign(this.content.style, {
-      top: `${(pt / 100) * bh}px`,
-      right: `${(pr / 100) * bw}px`,
-      bottom: `${(pb / 100) * bh}px`,
-      left: `${(pl / 100) * bw}px`,
-    });
+    const [top, right, bottom, left] = contentInsets(s.pad, box.width, box.height);
+    Object.assign(this.content.style, { top: `${top}px`, right: `${right}px`, bottom: `${bottom}px`, left: `${left}px` });
     if (this.qrWrap) {
-      const q = Math.max(48, Math.round((Math.min(bw, bh) * s.qrsize) / 100));
-      const m = Math.round(Math.min(bw, bh) * 0.03);
-      this.qrWrap.style.setProperty('--bw-qr', `${q}px`);
-      this.qrWrap.style.setProperty('--bw-qr-m', `${m}px`);
+      const qr = qrMetrics(box.width, box.height, s.qrsize);
+      this.qrWrap.style.setProperty('--bw-qr', `${qr.size}px`);
+      this.qrWrap.style.setProperty('--bw-qr-m', `${qr.margin}px`);
     }
     this.fitAll();
   }
@@ -721,11 +455,6 @@ export class Display {
     for (const v of this.visibleViews()) this.fit(v);
   }
 
-  private fitMode(): FitMode {
-    const anim = this.s?.anim;
-    return anim === 'scroll' ? 'height' : anim === 'crawl' ? 'width' : 'both';
-  }
-
   private fit(v: SlideView): void {
     const s = this.s!;
     const W = this.area.clientWidth;
@@ -736,7 +465,7 @@ export class Display {
     const vh = this.root.clientHeight;
     const minPx = s.sizeMin ? sizeToPx(s.sizeMin, vw, vh) : 0;
     const maxPx = s.sizeMax ? sizeToPx(s.sizeMax, vw, vh) : Infinity;
-    const mode = this.fitMode();
+    const mode = fitMode(s.anim);
     block.style.padding = inkOverhang(block)
       .map((n) => `${n.toFixed(3)}em`)
       .join(' ');
@@ -744,6 +473,7 @@ export class Display {
     const trace: FitInfo['trace'] = [];
     const tracing = this.debug?.tracing;
     let px: number;
+    // A fixed size is used as given; the limits only bound auto-fit.
     if (s.size) {
       px = sizeToPx(s.size, vw, vh);
     } else {
@@ -754,45 +484,17 @@ export class Display {
         if (tracing) trace.push({ size, w: block.scrollWidth, h: block.scrollHeight, ok: okW && okH });
         return okW && okH;
       };
-      let lo = 1;
-      let hi = Math.max(8, Math.min(Number.isFinite(maxPx) ? maxPx : Infinity, mode === 'width' ? W : H * 1.2));
-      if (fits(hi)) {
-        lo = hi;
-      } else {
-        for (let i = 0; i < 18 && hi - lo > 0.5; i++) {
-          const mid = (lo + hi) / 2;
-          if (fits(mid)) lo = mid;
-          else hi = mid;
-        }
-      }
-      px = Math.floor(lo * 2) / 2;
-      // Leave room for animations that grow or move the text.
-      if (s.anim === 'pulse') px *= 0.94;
-      if (s.anim === 'shake' || s.anim === 'bounce') px *= 0.96;
-      // A fixed size is used as given; the limits only bound auto-fit.
-      if (px > maxPx) px = maxPx;
-      if (px < minPx) px = minPx;
+      px = autoSize(fits, { mode, W, H, minPx, maxPx, anim: s.anim });
     }
     block.style.fontSize = `${Math.max(1, px)}px`;
-    if (mode !== 'both') this.setMarquee(v, W, H);
+    if (mode !== 'both') {
+      const m = mode === 'height' ? marquee(mode, W, block.scrollWidth, SPEED_FACTOR[s.speed]) : marquee(mode, H, block.scrollHeight, SPEED_FACTOR[s.speed]);
+      block.style.setProperty('--bw-from', `${m.from}px`);
+      block.style.setProperty('--bw-to', `${m.to}px`);
+      block.style.setProperty('--bw-dur', `${m.dur}s`);
+    }
     // The panel describes the slide on screen, not one leaving it.
     if (v === this.views[this.current]) this.debug?.fitted({ slide: this.views.indexOf(v), slides: this.views.length, block, W, H, px, fixed: !!s.size, minPx, maxPx, trace });
-  }
-
-  private setMarquee(v: SlideView, W: number, H: number): void {
-    const factor = SPEED_FACTOR[this.s!.speed];
-    const b = v.block;
-    if (this.fitMode() === 'height') {
-      const bw = b.scrollWidth;
-      b.style.setProperty('--bw-from', `${W}px`);
-      b.style.setProperty('--bw-to', `${-bw}px`);
-      b.style.setProperty('--bw-dur', `${((W + bw) / Math.max(W, 1)) * 6 * factor}s`);
-    } else {
-      const bh = b.scrollHeight;
-      b.style.setProperty('--bw-from', `${H}px`);
-      b.style.setProperty('--bw-to', `${-bh}px`);
-      b.style.setProperty('--bw-dur', `${((H + bh) / Math.max(H, 1)) * 8 * factor}s`);
-    }
   }
 
   // ---------------------------------------------------------------- animations
@@ -811,102 +513,4 @@ export class Display {
       v.block.classList.add(cls);
     }
   }
-}
-
-/**
- * Typewriter: reveal characters one by one, pause, delete letter by letter
- * quickly, then restart. Characters are hidden (not removed) so the layout and
- * the fitted size stay stable.
- */
-function typewriter(block: HTMLElement, factor: number): () => void {
-  // Split text spans into per-character spans once.
-  if (!block.dataset.tw) {
-    block.dataset.tw = '1';
-    block.querySelectorAll<HTMLElement>('.bw-line > span').forEach((span) => {
-      if (span.classList.contains('bw-cd')) {
-        span.classList.add('bw-ch');
-        return;
-      }
-      const text = span.textContent ?? '';
-      span.textContent = '';
-      for (const ch of Array.from(text)) {
-        const c = el('span', 'bw-ch');
-        c.textContent = ch;
-        span.append(c);
-      }
-    });
-  }
-  const chars = Array.from(block.querySelectorAll<HTMLElement>('.bw-ch'));
-  const TYPE = 90 * factor;
-  const DELETE = 30 * factor;
-  const PAUSE = 2200 * factor;
-  const GAP = 500 * factor;
-  let timer = 0;
-  let shown = 0;
-  let phase: 'type' | 'pause' | 'delete' | 'gap' = 'type';
-  chars.forEach((c) => c.classList.add('bw-hidden'));
-  // Safari repaints only around the character that changed, so glyph ink that
-  // reaches past that area (Caveat's "!" and "f") was left cut off. Flipping a
-  // practically invisible background on the whole block makes every step
-  // repaint all of it, including the ring around it that covers overhangs.
-  block.classList.add('bw-tw');
-  let flip = false;
-  const repaint = () => {
-    flip = !flip;
-    block.classList.toggle('bw-tw-flip', flip);
-  };
-  // Code spans: the box is drawn per character while typing, with rounded
-  // caps on the first character and on the last visible one, so it grows and
-  // shrinks with the text instead of showing empty.
-  const codeOf = chars.map((c) => c.closest<HTMLElement>('.bw-code'));
-  const updateCodeEnd = (i: number) => {
-    const code = codeOf[i];
-    if (!code) return;
-    code.querySelector('.bw-code-end')?.classList.remove('bw-code-end');
-    let last = -1;
-    for (let j = 0; j < shown; j++) if (codeOf[j] === code) last = j;
-    if (last !== -1) chars[last].classList.add('bw-code-end');
-  };
-  for (const code of new Set(codeOf)) {
-    code?.querySelector('.bw-ch')?.classList.add('bw-code-start');
-  }
-  const step = () => {
-    switch (phase) {
-      case 'type':
-        if (shown < chars.length) {
-          chars[shown++].classList.remove('bw-hidden');
-          updateCodeEnd(shown - 1);
-          repaint();
-          timer = window.setTimeout(step, TYPE);
-        } else {
-          phase = 'pause';
-          timer = window.setTimeout(step, PAUSE);
-        }
-        return;
-      case 'pause':
-        phase = 'delete';
-        step();
-        return;
-      case 'delete':
-        if (shown > 0) {
-          chars[--shown].classList.add('bw-hidden');
-          updateCodeEnd(shown);
-          repaint();
-          timer = window.setTimeout(step, DELETE);
-        } else {
-          phase = 'gap';
-          timer = window.setTimeout(step, GAP);
-        }
-        return;
-      case 'gap':
-        phase = 'type';
-        step();
-    }
-  };
-  timer = window.setTimeout(step, TYPE);
-  return () => {
-    clearTimeout(timer);
-    chars.forEach((c) => c.classList.remove('bw-hidden', 'bw-code-start', 'bw-code-end'));
-    block.classList.remove('bw-tw', 'bw-tw-flip');
-  };
 }

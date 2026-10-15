@@ -33,7 +33,6 @@ jobs:
           for i in $(seq 1 30); do curl -sf http://localhost:4173 >/dev/null && exit 0; sleep 1; done
           exit 1
       - run: npm run smoke
-      # Pixel comparisons can differ with the runner's fonts and GPU, so a
-      # failure here is reported without failing the build.
+      # Compares two renders on the same machine, with and without clipping,
+      # so it doesn't depend on the runner's fonts or GPU.
       - run: npm run clipcheck
-        continue-on-error: true

@@ -15,9 +15,13 @@ ARG NOINDEX
 ARG OPERATOR_DOCS
 RUN npm run build
 
-# The stock Caddy image, with only the site and its Caddyfile added.
+# The stock Caddy image, with the site and its Caddyfile added, running as a
+# non-root user. Docker lets unprivileged processes bind port 80 inside the
+# container, and the caddy binary also has the capability to.
 FROM caddy:2-alpine@sha256:d44355d3c2149dc580ce2cac735955d1c08d3d00882c30489c241aa51a5c10d9
+RUN chown 65532:65532 /data /config
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /src/dist /usr/share/caddy
+USER 65532:65532
 EXPOSE 80
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s CMD wget -q --spider http://127.0.0.1/ || exit 1

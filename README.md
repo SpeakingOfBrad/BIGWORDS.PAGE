@@ -41,23 +41,7 @@ docker compose up -d --build
 
 `compose.yaml` publishes no ports (port 80 is listed but commented out). Attach the service to your reverse proxy's network and let the proxy handle TLS. The proxy should also send `Strict-Transport-Security`.
 
-The image keeps the stock Caddy defaults, including running as root, so it behaves like any other `caddy` container. The site is static and holds no secrets, but if you want to lock the container down further, these compose settings work with it:
-
-```yaml
-services:
-  bigwords:
-    read_only: true
-    tmpfs:
-      - /data
-      - /config
-    cap_drop: [ALL]
-    cap_add: [NET_BIND_SERVICE] # needed to listen on :80
-    security_opt: [no-new-privileges:true]
-    mem_limit: 128m
-    cpus: 0.5
-```
-
-To run as a non-root user as well, change the Caddyfile to listen on a port above 1024 (for example `:8080`), add `user: "1000:1000"`, and point your proxy and the Dockerfile `HEALTHCHECK` at the new port.
+The container is locked down by default. The image runs Caddy as a non-root user (UID 65532) with its admin API off, and `compose.yaml` adds a read-only filesystem, drops every capability except binding port 80, blocks privilege escalation and caps memory and CPU. If you run the image some other way, such as plain `docker run` or Kubernetes, it still runs as non-root; keep `NET_BIND_SERVICE` if you drop capabilities, since the Caddy binary needs it to start, and give `/data` a writable tmpfs if you make the filesystem read-only.
 
 ### Build settings
 
