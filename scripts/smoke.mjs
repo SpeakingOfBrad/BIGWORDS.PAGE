@@ -15,9 +15,11 @@ await ctx.grantPermissions(['clipboard-read', 'clipboard-write']);
 const page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(String(e)));
-// Chrome logs the deliberate 404 of the not-found checks as an error.
+// Chrome logs the deliberate 404 of the not-found checks, and the deliberate
+// 500 of the image reload check, as errors.
 const expected404 = (m) => /status of 404/.test(m.text()) && /\/nope(#|$)/.test(m.location().url);
-page.on('console', (m) => m.type() === 'error' && !expected404(m) && errors.push(m.text()));
+const expected500 = (m) => /status of 500/.test(m.text()) && m.location().url.startsWith('https://img.test/');
+page.on('console', (m) => m.type() === 'error' && !expected404(m) && !expected500(m) && errors.push(m.text()));
 
 let failed = 0;
 const check = (name, ok, detail = '') => {
@@ -174,6 +176,27 @@ check('first of timer and until wins', /^(1h 00m 00s|59m 5\ds)$/.test(await page
 await page.goto(BASE + '/#Wait%20{countdown}&timer=2s&zero=Done!');
 await page.waitForTimeout(3500);
 check('timer reaches zero', (await blockInfo())?.text === 'Done!', (await blockInfo())?.text);
+
+// refresh reloads only the image: the page stays, a failed fetch keeps the last image
+const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
+const camRequests = [];
+await page.route('https://img.test/**', (route) => {
+  camRequests.push(route.request().url());
+  // The second fetch fails.
+  return camRequests.length === 2 ? route.fulfill({ status: 500 }) : route.fulfill({ contentType: 'image/png', body: PNG });
+});
+await page.goto(BASE + '/#{countdown}&timer=1h&img=https://img.test/cam.png?id=1&refresh=1');
+await page.evaluate(() => (window.__notReloaded = true));
+await page.waitForTimeout(3600);
+const cam = await page.evaluate(() => {
+  const img = document.querySelector('.bw-img-layer');
+  return { kept: window.__notReloaded === true, src: img?.getAttribute('src'), hidden: img?.hidden };
+});
+check('refresh keeps the page', cam.kept);
+check('refresh fetches the image once a second with a cache buster', camRequests.length >= 3 && camRequests.length <= 4 && /^https:\/\/img\.test\/cam\.png\?id=1&_=\d+$/.test(cam.src ?? ''), `${camRequests.length} requests, ${cam.src}`);
+check('a failed image reload keeps the last image', cam.hidden === false);
+check('refresh leaves the timer running', /^59m 5\ds$/.test(await page.locator('.bw-cd').textContent()), await page.locator('.bw-cd').textContent());
+await page.unroute('https://img.test/**');
 
 // QR
 await page.goto(BASE + '/#Scan&qr=https://example.com/a?b=1%26c=2&qrpos=below');

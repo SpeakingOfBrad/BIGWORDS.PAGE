@@ -10,6 +10,8 @@ export interface DisplayOptions {
   editor?: boolean;
   /** Fullscreen viewer: shows the debug overlay the `dbg` parameter asks for. */
   debug?: boolean;
+  /** Fullscreen viewer: fetches the image again every `refresh` seconds. */
+  reloadImage?: boolean;
   onImageError?: (url: string) => void;
   onImageLoad?: (url: string) => void;
 }
@@ -63,6 +65,16 @@ interface SlideView {
   el: HTMLElement; // full-area layer
   block: HTMLElement; // the text block
   stopAnim?: () => void;
+}
+
+/**
+ * The image URL with a throwaway query parameter, so neither the browser nor
+ * a cache in between can answer a reload with the copy it already has.
+ */
+function cacheBusted(url: string): string {
+  const hash = url.indexOf('#');
+  const base = hash === -1 ? url : url.slice(0, hash);
+  return `${base}${base.includes('?') ? '&' : '?'}_=${Date.now()}${hash === -1 ? '' : url.slice(hash)}`;
 }
 
 function prefersLight(): boolean {
@@ -241,6 +253,7 @@ export class Display {
   private area = el('div', 'bw-area');
   private flowImg: HTMLImageElement | null = null;
   private qrWrap: HTMLElement | null = null;
+  private imgTimer = 0;
 
   private views: SlideView[] = [];
   private current = 0;
@@ -287,6 +300,7 @@ export class Display {
     this.destroyed = true;
     this.clearTimers();
     clearTimeout(this.revealTimer);
+    clearTimeout(this.imgTimer);
     this.views.forEach((v) => v.stopAnim?.());
     this.resizeObs.disconnect();
     this.areaObs.disconnect();
@@ -315,6 +329,7 @@ export class Display {
 
     this.box.classList.toggle('bw-ratio', !!settings.ratio);
     this.buildImage();
+    this.scheduleImageReload();
     this.buildQr();
     this.deadline = this.countdownDeadline(settings);
     this.expired = this.deadline !== null && Date.now() >= this.deadline;
@@ -389,8 +404,10 @@ export class Display {
 
   // ---------------------------------------------------------------- image & QR
 
-  private makeImg(url: string): HTMLImageElement {
+  private makeImg(url: string, src = url): HTMLImageElement {
     const img = el('img');
+    // The URL from the link: `src` has a cache-busting query on reloads.
+    img.dataset.url = url;
     img.alt = '';
     img.decoding = 'async';
     // No crossOrigin: the pixels are never read, and requiring CORS made
@@ -405,7 +422,7 @@ export class Display {
       this.opts.onImageLoad?.(url);
       this.scheduleFit();
     });
-    img.src = url;
+    img.src = src;
     return img;
   }
 
@@ -415,10 +432,10 @@ export class Display {
     const wantFlow = s.img && (s.imgpos === 'above' || s.imgpos === 'below') ? s.img : null;
 
     // Reuse an existing element for the same URL so editor edits don't flicker.
-    const reuse = [this.bgImg, this.flowImg].find((i) => i && i.getAttribute('src') === s.img) ?? null;
+    const reuse = [this.bgImg, this.flowImg].find((i) => i && i.dataset.url === s.img) ?? null;
     const take = (url: string | null): HTMLImageElement | null => {
       if (!url) return null;
-      if (reuse && reuse.getAttribute('src') === url) return reuse;
+      if (reuse && reuse.dataset.url === url) return reuse;
       return this.makeImg(url);
     };
     const bg = take(wantBg);
@@ -436,6 +453,37 @@ export class Display {
       if (s.imgpos === 'above') this.content.insertBefore(flow, this.area);
       else this.area.after(flow);
     }
+  }
+
+  /**
+   * With `refresh`, the image is fetched again every N seconds, off screen,
+   * and swapped in only once it has loaded: no flicker, and a failed fetch
+   * leaves the last image up. The next fetch is timed from when this one
+   * settles, so a slow host never has requests piling up.
+   */
+  private scheduleImageReload(): void {
+    clearTimeout(this.imgTimer);
+    const s = this.s!;
+    const img = this.bgImg ?? this.flowImg;
+    if (!this.opts.reloadImage || !s.refresh || !img) return;
+    const url = img.dataset.url!;
+    // A data: URL never changes.
+    if (!/^https?:/i.test(url)) return;
+    this.imgTimer = window.setTimeout(() => {
+      const next = this.makeImg(url, cacheBusted(url));
+      const settle = (ok: boolean) => {
+        if (this.destroyed || (this.bgImg ?? this.flowImg) !== img) return;
+        if (ok) {
+          next.className = img.className;
+          img.replaceWith(next);
+          if (this.bgImg === img) this.bgImg = next;
+          else this.flowImg = next;
+        }
+        this.scheduleImageReload();
+      };
+      next.addEventListener('load', () => settle(true), { once: true });
+      next.addEventListener('error', () => settle(false), { once: true });
+    }, s.refresh * 1000);
   }
 
   private buildQr(): void {

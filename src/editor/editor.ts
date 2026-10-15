@@ -867,8 +867,7 @@ export function mountEditor(app: HTMLElement): { destroy(): void } {
       ? 'This link has no time zone, so each viewing device counts down to this time in its own zone. Pick a time to pin it to one moment everywhere.'
       : `Pick the time in your time zone (${timeZone}). It goes in the URL as UTC, so the countdown ends at the same moment everywhere.`;
     timerHint.textContent =
-      'Every screen runs its own timer from when it opens the link. Reloading the page or opening the link again starts it over.' +
-      (s.refresh ? ' Reload every (under Image) reloads the page, so it restarts the timer each time.' : '');
+      'Every screen runs its own timer from when it opens the link. Reloading the page or opening the link again starts it over.';
     const hasToken = state.message.includes('{countdown}');
     cdHint.textContent =
       (s.until || s.timer) && !hasToken && state.message.trim()

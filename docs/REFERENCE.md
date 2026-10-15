@@ -84,7 +84,7 @@ Messaging apps and other tools that turn URLs into links usually stop the link b
 | `qrsize` | QR code size, in percent of the display's shorter side | Whole number from 10 to 50 | `25` |
 | `img` | Show an image | A percent-encoded public image URL | *(none)* |
 | `imgpos` | Image position | `bg`, `full`, `above`, `below` | `bg` |
-| `refresh` | Reload the page every N seconds | Whole number from 1 to 86400 (larger values count as 86400) | *(none)* |
+| `refresh` | Reload the image every N seconds | Whole number from 1 to 86400 (larger values count as 86400) | *(none)* |
 | `until` | Countdown target | ISO 8601 date and time (`2026-12-31T23:59:00`) | *(none)* |
 | `timer` | Countdown length, from when the page opens. Use `until` or `timer`, not both. | Seconds (`14400`), or `d`, `h`, `m`, `s` amounts (`4h`, `1h30m`) | *(none)* |
 | `cdfmt` | Countdown format | `label`, `colon` | `label` |
@@ -238,7 +238,7 @@ Set `until` to an ISO 8601 date and time. The time is the **viewing device's loc
 
 ### For a length of time
 
-Set `timer` to a length of time. **The timer starts when the page opens**, so reloading the page or opening the link again starts it over, and so does `refresh`. Each device that opens the link runs its own timer. It keeps time while the tab is in the background or the screen is off.
+Set `timer` to a length of time. **The timer starts when the page opens**, so reloading the page or opening the link again starts it over. Each device that opens the link runs its own timer. It keeps time while the tab is in the background or the screen is off.
 
 | `timer` | Length |
 |---|---|
@@ -411,9 +411,9 @@ Any value that isn't one of the above, such as `qr=Table%2012`, goes in the code
 | `full` | Fits inside the display, letterboxed; text on top |
 | `above` / `below` | Placed above or below the text, which fits into the space left |
 
-The image loads straight from its host, which is never told which page asked for it. Like any image on the web, the host does see the viewing device's IP address and browser, and with `refresh` it sees a request every time the page reloads. Some hosts refuse to serve images to other sites, so an image that opens fine in its own tab can still fail here. If an image fails, the viewer leaves it out and the editor shows a warning.
+The image loads straight from its host, which is never told which page asked for it. Like any image on the web, the host does see the viewing device's IP address and browser, and with `refresh` it sees a request every time the image reloads. Some hosts refuse to serve images to other sites, so an image that opens fine in its own tab can still fail here. If an image fails, the viewer leaves it out and the editor shows a warning.
 
-`refresh=N` reloads the page every N seconds. It's only useful when the image URL points at something that changes, such as a webcam snapshot.
+`refresh=N` loads the image again every N seconds, for an image URL that points at something that changes, such as a webcam snapshot or a chart. Only the image reloads: the text, slides and any timer carry on. The new image replaces the old one once it has fully loaded, and if it fails to load, the last one stays up. Each reload adds a throwaway `_=` query parameter to the image URL, so no cache can answer it with the old image.
 
 ## Tips
 

@@ -8,10 +8,9 @@ export function mountViewer(app: HTMLElement): { update(): void; destroy(): void
   const stage = document.createElement('div');
   stage.className = 'viewer-stage';
   app.replaceChildren(stage);
-  const display = new Display(stage, { debug: true });
+  const display = new Display(stage, { debug: true, reloadImage: true });
 
   let settings: Settings;
-  let refreshTimer = 0;
   let lock: WakeLockSentinel | null = null;
 
   const acquireLock = async () => {
@@ -35,10 +34,6 @@ export function mountViewer(app: HTMLElement): { update(): void; destroy(): void
   const update = () => {
     settings = resolveSettings(parseFragment(location.hash));
     display.update(settings);
-    clearTimeout(refreshTimer);
-    if (settings.refresh) {
-      refreshTimer = window.setTimeout(() => location.reload(), settings.refresh * 1000);
-    }
     if (settings.wake) void acquireLock();
     else releaseLock();
   };
@@ -47,7 +42,6 @@ export function mountViewer(app: HTMLElement): { update(): void; destroy(): void
   return {
     update,
     destroy() {
-      clearTimeout(refreshTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       releaseLock();
       display.destroy();
